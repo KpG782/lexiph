@@ -2,7 +2,7 @@
 
 // RAG API Service for Philippine Legislation Research
 
-const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:8000'
+const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:3000'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -252,7 +252,6 @@ export async function checkRAGHealth(): Promise<HealthResponse> {
         )
       }
 
-      // More specific error messages
       if (error.message.includes('Failed to fetch')) {
         throw new Error(
           `Cannot connect to RAG API at ${RAG_API_BASE_URL}. Check if the server is running and CORS is configured.`
@@ -365,7 +364,11 @@ export class RAGWebSocket {
 
   sendQuery(query: string, userId?: string, useDeepSearch?: boolean) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ query, user_id: userId, use_deep_search: useDeepSearch }))
+      this.ws.send(JSON.stringify({ 
+        query, 
+        user_id: userId, 
+        use_deep_search: useDeepSearch 
+      }))
     } else {
       console.error('WebSocket not connected')
     }

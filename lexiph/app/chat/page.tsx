@@ -20,7 +20,7 @@ const mockMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: 'Hello! I\'m LexInsights, your Philippine legal compliance assistant. How can I help you today?',
+    content: 'Hello! I\'m LexInsight, your Philippine legal compliance assistant. How can I help you today?',
     created_at: new Date().toISOString(),
   },
 ]

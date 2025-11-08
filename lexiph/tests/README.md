@@ -1,0 +1,211 @@
+# RAG API Testing Guide
+
+## Overview
+
+This directory contains tests for the Philippine Legislative Research RAG API integration.
+
+## API Details
+
+- **Base URL**: `http://localhost:8000`
+- **Main Endpoint**: `POST /api/research/rag-summary`
+- **WebSocket**: `ws://localhost:8000/api/research/ws/rag-summary`
+- **Timeout**: 300 seconds (5 minutes)
+- **Expected Response Time**: 50-90 seconds
+
+## Pipeline Stages
+
+1. **Query Generation** (1-2 seconds) - Converts question into 3-7 optimized search queries
+2. **Database Search** (20-30 seconds) - Searches 33,562+ documents via semantic search + reranking
+3. **AI Summarization** (30-60 seconds) - Generates 8-section markdown summary
+
+## Testing Methods
+
+### Method 1: Browser-Based Test Page
+
+1. Start your Next.js development server:
+   ```bash
+   npm run dev
+   ```
+
+2. Navigate to the test page:
+   ```
+   http://localhost:3000/test-rag
+   ```
+
+3. Features:
+   - Health check button
+   - Query input with sample queries
+   - Real-time loading indicators
+   - Response metadata display
+   - Full summary preview
+
+### Method 2: Node.js Test Script
+
+1. Install dependencies (if not already installed):
+   ```bash
+   npm install
+   ```
+
+2. Run the test script:
+   ```bash
+   npx ts-node tests/rag-api-test.ts
+   ```
+
+3. The script will:
+   - Check API health
+   - Run multiple test queries
+   - Display timing information
+   - Save full responses to files
+   - Show success/failure summary
+
+### Method 3: Direct API Testing with cURL
+
+Test the health endpoint:
+```bash
+curl http://localhost:8000/api/research/health
+```
+
+Test a query:
+```bash
+curl -X POST http://localhost:8000/api/research/rag-summary \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is RA 9003?", "user_id": "test"}' \
+  --max-time 300
+```
+
+### Method 4: Using the Chat Interface
+
+1. Start the development server
+2. Navigate to `/chat`
+3. Switch to "Compliance Mode"
+4. Enter a query about Philippine legislation
+5. The RAG API will be called automatically
+
+## Sample Queries
+
+Use these queries to test different aspects of the API:
+
+1. **Simple Law Query**:
+   ```
+   What is RA 9003 and its main requirements?
+   ```
+
+2. **Complex Multi-Law Query**:
+   ```
+   What are the workplace safety requirements under Philippine law and what penalties apply for non-compliance?
+   ```
+
+3. **Specific Topic**:
+   ```
+   What is the Data Privacy Act of 2012 (RA 10173) and what are the requirements for businesses?
+   ```
+
+4. **Compliance Question**:
+   ```
+   What documents are required for environmental compliance certificate?
+   ```
+
+5. **Penalty Information**:
+   ```
+   What are the penalties for violating solid waste management laws?
+   ```
+
+## Expected Response Format
+
+```json
+{
+  "status": "completed",
+  "query": "What is RA 9003?",
+  "summary": "# EXECUTIVE SUMMARY\n\nRA 9003 is...",
+  "search_queries_used": [
+    "RA 9003 solid waste management",
+    "Republic Act 9003 requirements",
+    "ecological solid waste management act"
+  ],
+  "documents_found": 42,
+  "processing_stages": {
+    "query_generator": "completed",
+    "search_executor": "completed",
+    "summarizer": "completed"
+  }
+}
+```
+
+## Troubleshooting
+
+### API Not Responding
+
+1. Check if the RAG API server is running:
+   ```bash
+   curl http://localhost:8000/api/research/health
+   ```
+
+2. Verify the API URL in your `.env.local` file:
+   ```
+   NEXT_PUBLIC_RAG_API_URL=http://localhost:8000
+   ```
+
+3. Check the API server logs for errors
+
+### Timeout Errors
+
+- The API has a 300-second (5 minute) timeout
+- If queries consistently timeout:
+  - Check server resources (CPU, memory)
+  - Verify database is running
+  - Check network connectivity
+  - Review API server logs
+
+### Empty or Invalid Responses
+
+- Ensure your query is at least 5 characters
+- Check that the query is related to Philippine legislation
+- Verify the API returned a 200 status code
+- Check browser console for errors
+
+### WebSocket Connection Issues
+
+- Ensure WebSocket URL uses `ws://` not `http://`
+- Check firewall settings
+- Verify WebSocket endpoint is available
+- Try HTTP endpoint first to isolate the issue
+
+## Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+# RAG API Configuration
+NEXT_PUBLIC_RAG_API_URL=http://localhost:8000
+NEXT_PUBLIC_RAG_WS_URL=ws://localhost:8000
+
+# Supabase (if using authentication)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Performance Benchmarks
+
+Expected performance for typical queries:
+
+| Stage | Duration | Description |
+|-------|----------|-------------|
+| Query Generation | 1-2s | AI generates search queries |
+| Database Search | 20-30s | Semantic search + reranking |
+| Summarization | 30-60s | AI generates summary |
+| **Total** | **50-90s** | End-to-end pipeline |
+
+## API Documentation
+
+For complete API documentation, see:
+- `API_INSTRUCTIONS_NEW.md` in the project root
+- API server's `/docs` endpoint (if available)
+- `README_RAG_SYSTEM.md` for full system documentation
+
+## Support
+
+If you encounter issues:
+1. Check the troubleshooting section above
+2. Review API server logs
+3. Verify all environment variables are set correctly
+4. Ensure the RAG API server is running and accessible
