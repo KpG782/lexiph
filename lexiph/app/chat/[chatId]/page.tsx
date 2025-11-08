@@ -40,11 +40,6 @@ export default function ChatDetailPage() {
     const handleResize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      
-      // On desktop, ensure sidebar is open by default
-      if (!mobile && !isOpen) {
-        open()
-      }
     }
 
     // Set initial value
@@ -55,7 +50,7 @@ export default function ChatDetailPage() {
 
     // Cleanup
     return () => window.removeEventListener('resize', handleResize)
-  }, [setIsMobile, isOpen, open])
+  }, [setIsMobile])
 
   // Escape key handler to close sidebar on mobile
   useEffect(() => {

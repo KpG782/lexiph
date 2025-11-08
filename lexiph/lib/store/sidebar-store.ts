@@ -27,11 +27,16 @@ export const useSidebarStore = create<SidebarStore>()(
       
       close: () => set({ isOpen: false }),
       
-      setIsMobile: (isMobile: boolean) => set((state) => ({ 
-        isMobile,
-        // On mobile, close sidebar by default; on desktop, keep it open
-        isOpen: isMobile ? false : true
-      }))
+      setIsMobile: (isMobile: boolean) => set((state) => {
+        // Only auto-open on desktop if sidebar was previously closed due to mobile
+        // Don't override user's manual toggle preference
+        const shouldAutoOpen = !isMobile && state.isMobile && !state.isOpen
+        
+        return {
+          isMobile,
+          isOpen: shouldAutoOpen ? true : state.isOpen
+        }
+      })
     }),
     {
       name: 'sidebar-storage', // localStorage key
