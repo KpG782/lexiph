@@ -36,7 +36,7 @@ export function LoginForm() {
     <div className="w-full max-w-md space-y-6 p-4 sm:p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-center gap-1 mb-4">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Image 
               src="/logo/LOGO-0.5-woBG.svg" 
               alt="LexiPH Logo" 
