@@ -421,28 +421,9 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
           }
         }
       } else {
-        // GENERAL MODE: Add deep search results to messages
-        const userMessage: Message = {
-          id: `user-deep-${Date.now()}`,
-          role: 'user',
-          content: query,
-          created_at: new Date().toISOString(),
-        }
-        
-        // Deep search enhanced response
-        const assistantMessage: Message = {
-          id: `assistant-deep-${Date.now()}`,
-          role: 'assistant',
-          content: result.enhanced_summary,
-          created_at: new Date().toISOString(),
-          metadata: {
-            deepSearch: true,
-            documentsSearched: result.documents_searched,
-            relatedDocuments: result.related_documents,
-          }
-        }
-        
-        setMessages(prev => [...prev, userMessage, assistantMessage])
+        // GENERAL MODE: Deep search results are handled by the RAG store
+        // Messages are automatically added through the submitQuery flow
+        console.log('Deep search completed in general mode:', result)
       }
     }
 
