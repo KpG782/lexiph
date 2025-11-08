@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown } from 'lucide-react'
+import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
