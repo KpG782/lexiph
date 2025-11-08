@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown } from 'lucide-react'
+import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
@@ -9,6 +9,8 @@ import { AIDisclaimer, AIDisclaimerBadge } from './ai-disclaimer'
 import { cn } from '@/lib/utils'
 import { type RAGResponse } from '@/lib/services/rag-api'
 import { exportToDocx } from '@/lib/utils/docx-export'
+import { performDeepSearch, type DeepSearchResponse } from '@/lib/services/deep-search-api'
+import { LoadingIndicator } from './loading-indicator'
 
 interface ComplianceCanvasProps {
   content: string
@@ -16,9 +18,10 @@ interface ComplianceCanvasProps {
   ragResponse?: RAGResponse
   searchQueries?: string[]
   documentCount?: number
+  deepSearchResult?: DeepSearchResponse | null
 }
 
-export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries, documentCount }: ComplianceCanvasProps) {
+export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries, documentCount, deepSearchResult: externalDeepSearchResult }: ComplianceCanvasProps) {
   const { 
     isEditMode, 
     toggleEditMode, 
@@ -31,7 +34,18 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
   const [showHistory, setShowHistory] = useState(false)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isDeepSearching, setIsDeepSearching] = useState(false)
+  const [deepSearchResult, setDeepSearchResult] = useState<DeepSearchResponse | null>(externalDeepSearchResult || null)
+  const [showDeepSearch, setShowDeepSearch] = useState(false)
   const currentVersion = getCurrentVersion()
+
+  // Update deep search result when external prop changes
+  useEffect(() => {
+    if (externalDeepSearchResult) {
+      setDeepSearchResult(externalDeepSearchResult)
+      setShowDeepSearch(true)
+    }
+  }, [externalDeepSearchResult])
 
   // Initialize with current version or new content
   useEffect(() => {
@@ -96,6 +110,39 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       liveRegion.textContent = announcement
       document.body.appendChild(liveRegion)
       setTimeout(() => document.body.removeChild(liveRegion), 1000)
+    }
+  }
+
+  const handleDeepSearch = async () => {
+    setIsDeepSearching(true)
+    setShowDeepSearch(true)
+    
+    try {
+      const result = await performDeepSearch({
+        query: 'Perform comprehensive analysis with cross-references',
+        context: currentVersion?.content || content,
+        document_name: fileName,
+        user_id: 'compliance-user',
+        max_results: 50
+      })
+      
+      setDeepSearchResult(result)
+      
+      // Announce completion
+      const announcement = 'Deep search completed. Enhanced analysis available.'
+      const liveRegion = document.createElement('div')
+      liveRegion.setAttribute('role', 'status')
+      liveRegion.setAttribute('aria-live', 'polite')
+      liveRegion.className = 'sr-only'
+      liveRegion.textContent = announcement
+      document.body.appendChild(liveRegion)
+      setTimeout(() => document.body.removeChild(liveRegion), 1000)
+    } catch (error) {
+      console.error('Deep search failed:', error)
+      alert('Deep search failed. Please try again.')
+      setShowDeepSearch(false)
+    } finally {
+      setIsDeepSearching(false)
     }
   }
 
@@ -362,6 +409,30 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
               )}
             </Button>
 
+            {/* Deep Search Button */}
+            {!isEditMode && (
+              <Button
+                onClick={handleDeepSearch}
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2 bg-gradient-to-r from-iris-50 to-purple-50 border-iris-300 text-iris-700 hover:from-iris-100 hover:to-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2"
+                aria-label="Perform deep search analysis"
+                disabled={isDeepSearching}
+              >
+                {isDeepSearching ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-iris-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">Searching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-sm">Deep Search</span>
+                  </>
+                )}
+              </Button>
+            )}
+
             {/* Save Button (Edit Mode Only) */}
             {isEditMode && (
               <Button
@@ -476,6 +547,80 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
 
             {/* AI Disclaimer - Always show at top when content is ready */}
             {displayContent && <AIDisclaimer />}
+
+            {/* Deep Search Results */}
+            {showDeepSearch && deepSearchResult && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-iris-50 to-purple-50 border-2 border-iris-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 text-iris-600" aria-hidden="true" />
+                  <h3 className="font-display text-base font-semibold text-iris-900">
+                    Deep Search Results
+                  </h3>
+                  <span className="text-xs text-iris-600 bg-iris-100 px-2 py-0.5 rounded">
+                    {deepSearchResult.documents_searched} documents analyzed
+                  </span>
+                </div>
+
+                {/* Related Documents */}
+                {deepSearchResult.related_documents.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Related Documents:</h4>
+                    <div className="space-y-2">
+                      {deepSearchResult.related_documents.map((doc, idx) => (
+                        <div key={idx} className="bg-white p-3 rounded border border-iris-200">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-slate-900">{doc.title}</p>
+                              <p className="text-xs text-slate-600 mt-1">{doc.excerpt}</p>
+                              <p className="text-xs text-iris-600 mt-1">{doc.reference}</p>
+                            </div>
+                            <span className="text-xs font-semibold text-iris-700 bg-iris-100 px-2 py-1 rounded">
+                              {(doc.relevance_score * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Insights */}
+                {deepSearchResult.additional_insights.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Additional Insights:</h4>
+                    <ul className="space-y-1">
+                      {deepSearchResult.additional_insights.map((insight, idx) => (
+                        <li key={idx} className="text-sm text-slate-700 flex items-start gap-2">
+                          <span className="text-iris-600 mt-0.5">•</span>
+                          <span>{insight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Cross References */}
+                {deepSearchResult.cross_references.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Cross References:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {deepSearchResult.cross_references.map((ref, idx) => (
+                        <span key={idx} className="text-xs bg-white text-slate-700 px-2 py-1 rounded border border-iris-200">
+                          {ref}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowDeepSearch(false)}
+                  className="mt-3 text-xs text-iris-600 hover:text-iris-700 underline"
+                >
+                  Hide Deep Search Results
+                </button>
+              </div>
+            )}
 
             {/* RAG Metadata Section */}
             {displayContent && ragResponse && (

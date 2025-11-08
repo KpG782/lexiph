@@ -304,6 +304,7 @@ export function ChatContainer({ messages }: ChatContainerProps) {
   const [canvasContent, setCanvasContent] = useState('')
   const [canvasFileName, setCanvasFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [deepSearchResult, setDeepSearchResult] = useState<any>(null)
 
   // Show canvas when we have a RAG response
   useEffect(() => {
@@ -331,6 +332,7 @@ export function ChatContainer({ messages }: ChatContainerProps) {
       setShowCanvas(true)
       setCanvasContent('') // Clear previous content
       setCanvasFileName(file.name)
+      setDeepSearchResult(null) // Clear previous deep search
       
       // Simulate processing delay (in production, this would be actual API call)
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -351,12 +353,35 @@ export function ChatContainer({ messages }: ChatContainerProps) {
       setTimeout(() => document.body.removeChild(liveRegion), 1000)
     }
 
+    const handleDeepSearchComplete = (event: CustomEvent) => {
+      const { query, result, file } = event.detail
+      
+      console.log('Deep search completed:', query, result)
+      
+      // Store deep search result to pass to canvas
+      setDeepSearchResult(result)
+      
+      // If there's a file, also show the canvas
+      if (file) {
+        setShowCanvas(true)
+        setCanvasFileName(file.name)
+        
+        // Generate report if not already shown
+        if (!canvasContent) {
+          const mockReport = generateMockComplianceReport(file.name, query)
+          setCanvasContent(mockReport)
+        }
+      }
+    }
+
     window.addEventListener('file-uploaded', handleFileUpload as EventListener)
+    window.addEventListener('deep-search-complete', handleDeepSearchComplete as EventListener)
     
     return () => {
       window.removeEventListener('file-uploaded', handleFileUpload as EventListener)
+      window.removeEventListener('deep-search-complete', handleDeepSearchComplete as EventListener)
     }
-  }, [])
+  }, [canvasContent])
 
   // Toggle canvas visibility
   const toggleCanvas = () => {
@@ -457,6 +482,7 @@ export function ChatContainer({ messages }: ChatContainerProps) {
               ragResponse={currentResponse || undefined}
               searchQueries={currentResponse?.search_queries_used}
               documentCount={currentResponse?.documents_found}
+              deepSearchResult={deepSearchResult}
             />
           </div>
         )}

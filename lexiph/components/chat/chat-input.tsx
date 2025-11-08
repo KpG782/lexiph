@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Send, Paperclip, X, Loader2 } from 'lucide-react'
+import { Send, Paperclip, X, Loader2, Sparkles } from 'lucide-react'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { ChatModeToggle } from './chat-mode-toggle'
+import { performDeepSearch } from '@/lib/services/deep-search-api'
 
 // Debounce utility
 function debounce<T extends (...args: any[]) => any>(
@@ -22,6 +23,7 @@ function debounce<T extends (...args: any[]) => any>(
 export function ChatInput() {
   const [message, setMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isDeepSearching, setIsDeepSearching] = useState(false)
   const { mode, uploadedFile, setUploadedFile } = useChatModeStore()
   const { submitQuery, loading } = useRAGStore()
   const { user } = useAuthStore()
@@ -119,6 +121,54 @@ export function ChatInput() {
     }
   }
 
+  const handleDeepSearch = async () => {
+    if (!message.trim() && !uploadedFile) {
+      alert('Please enter a query or upload a document first')
+      return
+    }
+
+    setIsDeepSearching(true)
+
+    try {
+      const query = message.trim() || 'Perform comprehensive analysis'
+      const context = uploadedFile ? `Analyzing file: ${uploadedFile.name}` : undefined
+
+      const result = await performDeepSearch({
+        query,
+        context,
+        document_name: uploadedFile?.name,
+        user_id: user?.id || 'chat-user',
+        max_results: 50
+      })
+
+      // Dispatch event with deep search results
+      const event = new CustomEvent('deep-search-complete', {
+        detail: {
+          query,
+          result,
+          file: uploadedFile
+        }
+      })
+      window.dispatchEvent(event)
+
+      // Show success message
+      const announcement = 'Deep search completed. Enhanced analysis available.'
+      const liveRegion = document.createElement('div')
+      liveRegion.setAttribute('role', 'status')
+      liveRegion.setAttribute('aria-live', 'polite')
+      liveRegion.className = 'sr-only'
+      liveRegion.textContent = announcement
+      document.body.appendChild(liveRegion)
+      setTimeout(() => document.body.removeChild(liveRegion), 1000)
+
+    } catch (error) {
+      console.error('Deep search failed:', error)
+      alert('Deep search failed. Please try again.')
+    } finally {
+      setIsDeepSearching(false)
+    }
+  }
+
   const placeholder = mode === 'general' 
     ? 'Ask about Philippine compliance laws...'
     : 'Upload a document and ask about compliance...'
@@ -200,6 +250,26 @@ export function ChatInput() {
             Press Enter to send, Shift+Enter for new line
           </span>
           
+          {/* Deep Search Button (Compliance Mode Only) */}
+          {mode === 'compliance' && (
+            <button
+              onClick={handleDeepSearch}
+              disabled={(!message.trim() && !uploadedFile) || isDeepSearching || isSending || loading}
+              className="rounded-lg bg-gradient-to-r from-iris-500 to-purple-500 p-2 text-white transition-all hover:from-iris-600 hover:to-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[40px] min-w-[40px] flex items-center justify-center"
+              aria-label={isDeepSearching ? 'Performing deep search...' : 'Perform deep search'}
+              type="button"
+              title="Deep Search - Enhanced analysis with cross-references"
+            >
+              {isDeepSearching ? (
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles className="h-5 w-5" aria-hidden="true" />
+              )}
+              <span className="sr-only">{isDeepSearching ? 'Searching...' : 'Deep Search'}</span>
+            </button>
+          )}
+          
+          {/* Send Button */}
           <button
             onClick={handleSend}
             disabled={(!message.trim() && !uploadedFile) || isSending || loading}
