@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useSidebarStore } from '@/lib/store/sidebar-store'
 import { useChatStore } from '@/lib/store/chat-store'
@@ -25,11 +25,14 @@ const mockMessages: Message[] = [
   },
 ]
 
-export default function ChatPage() {
+export default function ChatDetailPage() {
   const router = useRouter()
+  const params = useParams()
+  const chatId = params.chatId as string
+  
   const { user, loading } = useAuthStore()
-  const { isOpen, isMobile, open, setIsMobile } = useSidebarStore()
-  const { chats, selectChat } = useChatStore()
+  const { isOpen, isMobile, open, close, setIsMobile } = useSidebarStore()
+  const { chats, activeChat, selectChat } = useChatStore()
   const [checkingVerification, setCheckingVerification] = useState(true)
 
   // Responsive breakpoint detection
@@ -58,14 +61,14 @@ export default function ChatPage() {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isMobile && isOpen) {
-        useSidebarStore.getState().close()
+        close()
       }
     }
 
     window.addEventListener('keydown', handleEscape)
 
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [isMobile, isOpen])
+  }, [isMobile, isOpen, close])
 
   // Check authentication and email verification
   useEffect(() => {
@@ -91,15 +94,24 @@ export default function ChatPage() {
     checkAuth()
   }, [user, loading, router])
 
-  // Redirect to first chat if available
+  // Load chat from URL parameter
   useEffect(() => {
-    if (!checkingVerification && user && chats.length > 0) {
-      // Navigate to the first chat (most recent) without selecting yet
-      // The dynamic route will handle selection
-      const firstChat = chats[0]
-      router.push(`/chat/${firstChat.id}`)
+    if (!checkingVerification && chatId) {
+      // Check if chat exists
+      const chat = chats.find(c => c.id === chatId)
+      
+      if (chat) {
+        // Select the chat if it's not already active
+        if (activeChat?.id !== chatId) {
+          selectChat(chatId)
+        }
+      } else {
+        // Chat not found, redirect to main chat page
+        console.warn(`Chat with id ${chatId} not found`)
+        router.push('/chat')
+      }
     }
-  }, [checkingVerification, user, chats, router])
+  }, [checkingVerification, chatId, chats, activeChat, selectChat, router])
 
   // Show loading state while checking session or verification
   if (loading || checkingVerification) {
@@ -143,10 +155,10 @@ export default function ChatPage() {
               onClick={open}
               variant="outline"
               size="icon"
-              className="h-10 w-10 bg-white shadow-md hover:bg-slate-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 transition-all duration-150"
+              className="h-10 w-10 bg-white shadow-md hover:bg-slate-50 focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
               aria-label="Open sidebar menu"
             >
-              <Menu className="h-5 w-5 text-slate-700" />
+              <Menu className="h-5 w-5" />
             </Button>
           </div>
         )}

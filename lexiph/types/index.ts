@@ -12,6 +12,16 @@ export interface Message {
   created_at: string
 }
 
+export interface Chat {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+  user_id: string
+  message_count?: number
+  last_message_preview?: string
+}
+
 export interface AuthError {
   message: string
   status?: number
