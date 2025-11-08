@@ -86,7 +86,7 @@ interface RAGStore {
   ragWebSocket: RAGWebSocket | null
   
   // Actions
-  submitQuery: (query: string, userId?: string) => Promise<void>
+  submitQuery: (query: string, userId?: string, retryCount?: number) => Promise<void>
   clearError: () => void
   connectWebSocket: () => void
   disconnectWebSocket: () => void

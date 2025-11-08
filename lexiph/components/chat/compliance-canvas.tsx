@@ -117,7 +117,7 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
   // Enhanced markdown rendering with full color-coded section blocks
   const renderContent = (text: string) => {
     const lines = text.split('\n')
-    const elements: JSX.Element[] = []
+    const elements: React.ReactElement[] = []
     let currentSection: 'green' | 'yellow' | 'red' | null = null
     let sectionContent: string[] = []
     
@@ -252,21 +252,24 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       // Detect section changes
       if (line.startsWith('## ✅')) {
         if (sectionContent.length > 0) {
-          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          const section = renderSection(sectionContent, currentSection, i - sectionContent.length)
+          if (section) elements.push(section)
           sectionContent = []
         }
         currentSection = 'green'
         sectionContent.push(line)
       } else if (line.startsWith('## ⚠️')) {
         if (sectionContent.length > 0) {
-          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          const section = renderSection(sectionContent, currentSection, i - sectionContent.length)
+          if (section) elements.push(section)
           sectionContent = []
         }
         currentSection = 'yellow'
         sectionContent.push(line)
       } else if (line.startsWith('## 🚫')) {
         if (sectionContent.length > 0) {
-          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          const section = renderSection(sectionContent, currentSection, i - sectionContent.length)
+          if (section) elements.push(section)
           sectionContent = []
         }
         currentSection = 'red'
@@ -274,7 +277,8 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       } else if (line.startsWith('## ') && !line.includes('✅') && !line.includes('⚠️') && !line.includes('🚫')) {
         // Regular section - end current colored section
         if (sectionContent.length > 0) {
-          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          const section = renderSection(sectionContent, currentSection, i - sectionContent.length)
+          if (section) elements.push(section)
           sectionContent = []
         }
         currentSection = null
@@ -291,10 +295,11 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
     
     // Render remaining section
     if (sectionContent.length > 0) {
-      elements.push(renderSection(sectionContent, currentSection, lines.length - sectionContent.length))
+      const section = renderSection(sectionContent, currentSection, lines.length - sectionContent.length)
+      if (section) elements.push(section)
     }
     
-    return elements.filter(el => el !== null)
+    return elements
   }
 
   return (

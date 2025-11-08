@@ -110,7 +110,7 @@ export class RAGWebSocket {
 
   connect(onMessage: (event: WebSocketEvent) => void, onError?: (error: any) => void) {
     this.onMessage = onMessage
-    this.onError = onError
+    this.onError = onError || null
 
     try {
       this.ws = new WebSocket(`${this.wsUrl}/api/research/ws/rag-summary`)

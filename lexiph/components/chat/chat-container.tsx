@@ -319,7 +319,6 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       setCanvasContent('')
       setCanvasFileName('')
     }
-    // Don't auto-show canvas in compliance mode - wait for file upload
   }, [mode, currentResponse])
 
   // Add RAG responses to messages in general mode
@@ -363,8 +362,48 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
 
   // Listen for file upload events
   useEffect(() => {
-    const handleFileUpload = async (event: CustomEvent) => {
-      const { file, query } = event.detail
+    if (currentResponse && mode === 'general') {
+      if (currentQuery) {
+        const userMessage: Message = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content: currentQuery,
+          created_at: new Date().toISOString(),
+        }
+        
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: currentResponse.summary,
+          created_at: new Date().toISOString(),
+        }
+        
+        setMessages(prev => [...prev, userMessage, assistantMessage])
+        setCurrentQuery('')
+      }
+    }
+  }, [currentResponse, mode, currentQuery])
+
+  // Listen for query submissions
+  useEffect(() => {
+    const handleQuerySubmit = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { query } = customEvent.detail
+      setCurrentQuery(query)
+    }
+
+    window.addEventListener('query-submitted', handleQuerySubmit)
+    
+    return () => {
+      window.removeEventListener('query-submitted', handleQuerySubmit)
+    }
+  }, [])
+
+  // Listen for file upload and deep search events
+  useEffect(() => {
+    const handleFileUpload = async (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { file, query } = customEvent.detail
       
       console.log('File uploaded:', file.name, 'Query:', query)
       
@@ -396,6 +435,9 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
 
     const handleDeepSearchComplete = (event: CustomEvent) => {
       const { query, result, file } = event.detail
+    const handleDeepSearchComplete = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { query, result, file } = customEvent.detail
       
       console.log('Deep search completed:', query, result)
       
@@ -447,6 +489,14 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       window.removeEventListener('deep-search-complete', handleDeepSearchComplete as EventListener)
     }
   }, [canvasContent])
+    window.addEventListener('file-uploaded', handleFileUpload)
+    window.addEventListener('deep-search-complete', handleDeepSearchComplete)
+    
+    return () => {
+      window.removeEventListener('file-uploaded', handleFileUpload)
+      window.removeEventListener('deep-search-complete', handleDeepSearchComplete)
+    }
+  }, [mode, canvasContent])
 
   // Toggle canvas visibility
   const toggleCanvas = () => {
