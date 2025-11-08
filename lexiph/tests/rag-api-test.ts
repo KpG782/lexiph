@@ -162,7 +162,7 @@ async function testErrorHandling() {
 
 // Main test runner
 async function runAllTests() {
-  logSection('RAG API Test Suite - LexInsights')
+  logSection('RAG API Test Suite - LexInsight')
   
   log('API Base URL: http://localhost:8000', 'blue')
   log('Endpoint: POST /api/research/rag-summary', 'blue')
