@@ -22,6 +22,9 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "LexInsights - Philippine Legal Compliance Assistant",
   description: "Your AI-powered Philippine legal compliance assistant",
+  icons: {
+    icon: "/logo/LOGO-0.5-woBG.svg",
+  },
 };
 
 export default function RootLayout({
