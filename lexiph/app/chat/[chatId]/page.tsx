@@ -158,11 +158,6 @@ export default function ChatDetailPage() {
           </div>
         )}
         
-        {/* Demo banner */}
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 sm:py-3 text-center text-xs sm:text-sm text-blue-800">
-          This is a demo - AI chat coming soon
-        </div>
-        
         <ChatContainer messages={mockMessages} />
       </main>
     </div>
