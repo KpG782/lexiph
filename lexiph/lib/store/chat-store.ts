@@ -18,43 +18,61 @@ interface ChatStore {
   addRAGMessage: (query: string, response: any) => void
 }
 
-// Mock data for MVP
+// Mock data for MVP - Philippine Law & Compliance Use Cases
 const mockChats: Chat[] = [
   {
     id: '1',
-    title: 'Getting Started with Next.js',
+    title: 'Barangay Disaster Plan Review',
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     user_id: 'mock-user',
-    message_count: 5,
-    last_message_preview: 'How do I set up a new Next.js project?'
+    message_count: 8,
+    last_message_preview: 'What are the required sections for a barangay disaster preparedness plan?'
   },
   {
     id: '2',
-    title: 'TypeScript Best Practices',
+    title: 'RA 9003 Solid Waste Compliance',
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     user_id: 'mock-user',
     message_count: 12,
-    last_message_preview: 'What are some TypeScript best practices?'
+    last_message_preview: 'Does our waste management plan comply with RA 9003 requirements?'
   },
   {
     id: '3',
-    title: 'Zustand State Management',
+    title: 'DPWH Flood Control Permits',
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     user_id: 'mock-user',
-    message_count: 8,
-    last_message_preview: 'How does Zustand compare to Redux?'
+    message_count: 15,
+    last_message_preview: 'What permits are needed for flood control projects in Metro Manila?'
   },
   {
     id: '4',
-    title: 'Tailwind CSS Tips',
+    title: 'Data Privacy Act Compliance',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    user_id: 'mock-user',
+    message_count: 10,
+    last_message_preview: 'How do we ensure our employee records comply with RA 10173?'
+  },
+  {
+    id: '5',
+    title: 'LGU Environmental Clearance',
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 1 week ago
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
     user_id: 'mock-user',
-    message_count: 15,
-    last_message_preview: 'What are some useful Tailwind utilities?'
+    message_count: 6,
+    last_message_preview: 'What documents are required for environmental compliance certificate?'
+  },
+  {
+    id: '6',
+    title: 'Labor Code Workplace Safety',
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
+    user_id: 'mock-user',
+    message_count: 9,
+    last_message_preview: 'What are the mandatory workplace safety requirements under Philippine law?'
   }
 ]
 

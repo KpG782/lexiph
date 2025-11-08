@@ -46,15 +46,21 @@ export function ChatInput() {
       console.log('Calling general chat API with message:', message)
       await new Promise(resolve => setTimeout(resolve, 500))
     } else {
-      // Compliance mode - use RAG API
-      if (message.trim()) {
-        await submitQuery(message.trim(), user?.id)
-      }
-      
-      // If file is uploaded, handle file processing
+      // Compliance mode - use RAG API or file processing
       if (uploadedFile) {
         console.log('Processing compliance file:', uploadedFile.name)
-        // File processing would be implemented here
+        // Trigger canvas display with mock compliance report
+        // This will be handled by ChatContainer listening for file uploads
+        const event = new CustomEvent('file-uploaded', { 
+          detail: { 
+            file: uploadedFile,
+            query: message.trim() || 'Analyze this document for compliance'
+          } 
+        })
+        window.dispatchEvent(event)
+      } else if (message.trim()) {
+        // Text-only query - use RAG API
+        await submitQuery(message.trim(), user?.id)
       }
     }
     

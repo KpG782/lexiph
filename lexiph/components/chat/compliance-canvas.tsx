@@ -5,6 +5,7 @@ import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck } from
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
+import { AIDisclaimer, AIDisclaimerBadge } from './ai-disclaimer'
 import { cn } from '@/lib/utils'
 import { type RAGResponse } from '@/lib/services/rag-api'
 
@@ -76,12 +77,53 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
     }
   }
 
-  const displayContent = currentVersion?.content || content
+  // Always prioritize the content prop over stored versions for fresh analysis
+  const displayContent = content || currentVersion?.content || ''
 
-  // Simple markdown-like rendering for demo
+  // Enhanced markdown rendering with full color-coded section blocks
   const renderContent = (text: string) => {
-    return text.split('\n').map((line, index) => {
-      // Headers
+    const lines = text.split('\n')
+    const elements: JSX.Element[] = []
+    let currentSection: 'green' | 'yellow' | 'red' | null = null
+    let sectionContent: string[] = []
+    
+    const renderSection = (content: string[], color: 'green' | 'yellow' | 'red' | null, startIndex: number) => {
+      if (content.length === 0) return null
+      
+      const bgColor = color === 'green' ? 'bg-green-50' : color === 'yellow' ? 'bg-amber-50' : color === 'red' ? 'bg-red-50' : 'bg-white'
+      const borderColor = color === 'green' ? 'border-green-200' : color === 'yellow' ? 'border-amber-200' : color === 'red' ? 'border-red-200' : 'border-slate-200'
+      
+      return (
+        <div key={`section-${startIndex}`} className={`${bgColor} border ${borderColor} rounded-lg p-4 my-4`}>
+          {content.map((line, idx) => renderLine(line, startIndex + idx))}
+        </div>
+      )
+    }
+    
+    const renderLine = (line: string, index: number) => {
+      // Color-coded section headers
+      if (line.startsWith('## ✅')) {
+        return <h2 key={index} className="text-xl font-bold text-green-800 border-l-4 border-green-600 pl-4 py-2 mb-2">{line.slice(2)}</h2>
+      }
+      if (line.startsWith('## ⚠️')) {
+        return <h2 key={index} className="text-xl font-bold text-amber-800 border-l-4 border-amber-600 pl-4 py-2 mb-2">{line.slice(2)}</h2>
+      }
+      if (line.startsWith('## 🚫')) {
+        return <h2 key={index} className="text-xl font-bold text-red-800 border-l-4 border-red-600 pl-4 py-2 mb-2">{line.slice(2)}</h2>
+      }
+      
+      // Subsection headers with status indicators
+      if (line.startsWith('### ') && line.includes('✅')) {
+        return <h3 key={index} className="text-lg font-bold text-green-800 px-3 py-2 mt-3 mb-2 border-l-2 border-green-600">{line.slice(4)}</h3>
+      }
+      if (line.startsWith('### ') && line.includes('⚠️')) {
+        return <h3 key={index} className="text-lg font-bold text-amber-800 px-3 py-2 mt-3 mb-2 border-l-2 border-amber-600">{line.slice(4)}</h3>
+      }
+      if (line.startsWith('### ') && line.includes('🚫')) {
+        return <h3 key={index} className="text-lg font-bold text-red-800 px-3 py-2 mt-3 mb-2 border-l-2 border-red-600">{line.slice(4)}</h3>
+      }
+      
+      // Regular headers
       if (line.startsWith('# ')) {
         return <h1 key={index} className="text-2xl font-bold text-slate-900 mt-6 mb-4">{line.slice(2)}</h1>
       }
@@ -92,12 +134,43 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
         return <h3 key={index} className="text-lg font-semibold text-slate-800 mt-4 mb-2">{line.slice(4)}</h3>
       }
       
+      // Status indicators in content
+      if (line.includes('**Status:** ✅')) {
+        return <p key={index} className="font-semibold text-green-700 my-2 bg-green-50 px-2 py-1 rounded inline-block">{line}</p>
+      }
+      if (line.includes('**Status:** ⚠️') || line.includes('**Status:** 🚫')) {
+        const isWarning = line.includes('⚠️')
+        return <p key={index} className={`font-semibold my-2 px-2 py-1 rounded inline-block ${isWarning ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50'}`}>{line}</p>
+      }
+      
+      // Compliance score
+      if (line.includes('Compliance Score:')) {
+        const score = line.match(/(\d+)%/)
+        const scoreNum = score ? parseInt(score[1]) : 0
+        let colorClass = 'text-red-700 bg-red-50 border-red-200'
+        if (scoreNum >= 80) colorClass = 'text-green-700 bg-green-50 border-green-200'
+        else if (scoreNum >= 60) colorClass = 'text-amber-700 bg-amber-50 border-amber-200'
+        
+        return <div key={index} className={`text-2xl font-bold my-4 p-4 rounded-lg border-2 ${colorClass}`}>{line}</div>
+      }
+      
       // Bold text
       if (line.startsWith('**') && line.endsWith('**')) {
         return <p key={index} className="font-semibold text-slate-900 my-2">{line.slice(2, -2)}</p>
       }
       
-      // List items
+      // List items with color coding
+      if (line.trim().startsWith('- ✅') || line.trim().startsWith('✅')) {
+        return <li key={index} className="text-green-800 ml-4 my-1 px-2 py-1.5 font-medium">{line.trim().replace(/^-?\s*✅\s*/, '✅ ')}</li>
+      }
+      if (line.trim().startsWith('- ⚠️') || line.trim().startsWith('⚠️')) {
+        return <li key={index} className="text-amber-800 ml-4 my-1 px-2 py-1.5 font-medium">{line.trim().replace(/^-?\s*⚠️\s*/, '⚠️ ')}</li>
+      }
+      if (line.trim().startsWith('- 🚫') || line.trim().startsWith('🚫')) {
+        return <li key={index} className="text-red-800 ml-4 my-1 px-2 py-1.5 font-medium">{line.trim().replace(/^-?\s*🚫\s*/, '🚫 ')}</li>
+      }
+      
+      // Regular list items
       if (line.trim().startsWith('- ')) {
         return <li key={index} className="text-slate-700 ml-4 my-1">{line.trim().slice(2)}</li>
       }
@@ -105,6 +178,11 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       // Numbered lists
       if (/^\d+\./.test(line.trim())) {
         return <li key={index} className="text-slate-700 ml-4 my-1">{line.trim().replace(/^\d+\.\s*/, '')}</li>
+      }
+      
+      // Action items with icons
+      if (line.trim().startsWith('✏️') || line.trim().startsWith('📅') || line.trim().startsWith('🎯')) {
+        return <p key={index} className="text-slate-700 my-2 pl-6 leading-relaxed">{line}</p>
       }
       
       // Horizontal rule
@@ -131,7 +209,58 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       
       // Regular paragraphs
       return <p key={index} className="text-slate-700 my-2 leading-relaxed">{line}</p>
-    })
+    }
+    
+    // Process lines and group by sections
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      
+      // Detect section changes
+      if (line.startsWith('## ✅')) {
+        if (sectionContent.length > 0) {
+          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          sectionContent = []
+        }
+        currentSection = 'green'
+        sectionContent.push(line)
+      } else if (line.startsWith('## ⚠️')) {
+        if (sectionContent.length > 0) {
+          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          sectionContent = []
+        }
+        currentSection = 'yellow'
+        sectionContent.push(line)
+      } else if (line.startsWith('## 🚫')) {
+        if (sectionContent.length > 0) {
+          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          sectionContent = []
+        }
+        currentSection = 'red'
+        sectionContent.push(line)
+      } else if (line.startsWith('## ') && !line.includes('✅') && !line.includes('⚠️') && !line.includes('🚫')) {
+        // Regular section - end current colored section
+        if (sectionContent.length > 0) {
+          elements.push(renderSection(sectionContent, currentSection, i - sectionContent.length))
+          sectionContent = []
+        }
+        currentSection = null
+        elements.push(renderLine(line, i))
+      } else {
+        // Add to current section
+        if (currentSection) {
+          sectionContent.push(line)
+        } else {
+          elements.push(renderLine(line, i))
+        }
+      }
+    }
+    
+    // Render remaining section
+    if (sectionContent.length > 0) {
+      elements.push(renderSection(sectionContent, currentSection, lines.length - sectionContent.length))
+    }
+    
+    return elements.filter(el => el !== null)
   }
 
   return (
@@ -264,6 +393,9 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
             tabIndex={0}
             aria-label="Compliance report content"
           >
+            {/* AI Disclaimer - Always show at top */}
+            <AIDisclaimer />
+
             {/* RAG Metadata Section */}
             {ragResponse && (
               <div className="mb-6 pb-4 border-b border-slate-200">
@@ -272,6 +404,7 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
                   <h3 className="font-display text-sm font-semibold text-neutral-900">
                     Research Metadata
                   </h3>
+                  <AIDisclaimerBadge />
                 </div>
                 
                 {searchQueries && searchQueries.length > 0 && (
