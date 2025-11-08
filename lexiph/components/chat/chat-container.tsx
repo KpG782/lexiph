@@ -418,7 +418,7 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
             isComplianceWithCanvas ? 'w-full lg:w-[40%]' : 'w-full'
           } transition-all duration-300`}
         >
-          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 sm:px-4">
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
             {/* RAG Loading State */}
             {loading && mode === 'compliance' && (
               <div className="mb-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">

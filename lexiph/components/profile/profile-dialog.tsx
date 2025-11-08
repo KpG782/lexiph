@@ -1,0 +1,113 @@
+'use client'
+
+import { User, Mail, Calendar, Shield, LogOut } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/lib/store/auth-store'
+import { useRouter } from 'next/navigation'
+
+interface ProfileDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
+  const { user, signOut } = useAuthStore()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    onOpenChange(false)
+    router.push('/auth/login')
+  }
+
+  if (!user) return null
+
+  const userMetadata = (user as any)?.user_metadata || {}
+  const email = user.email || 'No email'
+  const fullName = userMetadata.full_name || userMetadata.name || 'User'
+  const avatarUrl = userMetadata.avatar_url
+  const createdAt = (user as any).created_at ? new Date((user as any).created_at).toLocaleDateString() : 'Unknown'
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-iris-600" />
+            Profile
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Avatar and Name */}
+          <div className="flex flex-col items-center text-center">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="h-24 w-24 rounded-full object-cover border-4 border-iris-100"
+              />
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-iris-500 to-iris-700 border-4 border-iris-100">
+                <User className="h-12 w-12 text-white" />
+              </div>
+            )}
+            <h2 className="mt-4 text-xl font-semibold text-slate-900">{fullName}</h2>
+          </div>
+
+          {/* User Details */}
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+              <Mail className="h-5 w-5 text-slate-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-0.5">Email</p>
+                <p className="text-sm text-slate-900 break-all">{email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+              <Calendar className="h-5 w-5 text-slate-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-slate-500 mb-0.5">Member Since</p>
+                <p className="text-sm text-slate-900">{createdAt}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+              <Shield className="h-5 w-5 text-slate-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-slate-500 mb-0.5">Account Status</p>
+                <p className="text-sm text-slate-900">
+                  {(user as any).email_confirmed_at ? (
+                    <span className="inline-flex items-center gap-1 text-green-600">
+                      <span className="h-2 w-2 rounded-full bg-green-600"></span>
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-amber-600">
+                      <span className="h-2 w-2 rounded-full bg-amber-600"></span>
+                      Pending Verification
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t space-y-2">
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

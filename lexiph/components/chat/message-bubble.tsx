@@ -21,7 +21,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div
-      className={`mb-4 max-w-[85%] sm:max-w-[80%] rounded-xl p-4 sm:p-5 shadow-md transition-all hover:shadow-lg ${
+      className={`mb-4 max-w-[90%] sm:max-w-[85%] lg:max-w-[90%] rounded-xl p-4 sm:p-5 shadow-md transition-all hover:shadow-lg ${
         isUser
           ? 'ml-auto bg-gradient-to-br from-iris-500 to-purple-500 text-white border-2 border-iris-300'
           : 'mr-auto border-2 border-slate-200 bg-white text-slate-900'

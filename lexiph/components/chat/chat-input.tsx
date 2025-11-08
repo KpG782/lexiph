@@ -187,7 +187,7 @@ export function ChatInput() {
 
   return (
     <div className="border-t bg-white p-3 sm:p-4" role="region" aria-label="Message input">
-      <div className="mx-auto max-w-3xl space-y-3">
+      <div className="mx-auto max-w-5xl space-y-3">
         {/* Mode Toggle */}
         <div className="flex justify-center">
           <ChatModeToggle />
