@@ -1,18 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Edit3, Eye, History, Save } from 'lucide-react'
+import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
 import { cn } from '@/lib/utils'
+import { type RAGResponse } from '@/lib/services/rag-api'
 
 interface ComplianceCanvasProps {
   content: string
   fileName?: string
+  ragResponse?: RAGResponse
+  searchQueries?: string[]
+  documentCount?: number
 }
 
-export function ComplianceCanvas({ content, fileName }: ComplianceCanvasProps) {
+export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries, documentCount }: ComplianceCanvasProps) {
   const { 
     isEditMode, 
     toggleEditMode, 
@@ -157,6 +161,12 @@ export function ComplianceCanvas({ content, fileName }: ComplianceCanvasProps) {
                 ({currentVersion.label})
               </span>
             )}
+            {documentCount !== undefined && documentCount > 0 && (
+              <span className="inline-flex items-center gap-1 bg-iris-100 text-iris-700 px-2 py-1 rounded text-xs font-medium">
+                <FileCheck className="h-3 w-3" aria-hidden="true" />
+                {documentCount} docs
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -254,6 +264,41 @@ export function ComplianceCanvas({ content, fileName }: ComplianceCanvasProps) {
             tabIndex={0}
             aria-label="Compliance report content"
           >
+            {/* RAG Metadata Section */}
+            {ragResponse && (
+              <div className="mb-6 pb-4 border-b border-slate-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <Search className="h-4 w-4 text-iris-600" aria-hidden="true" />
+                  <h3 className="font-display text-sm font-semibold text-neutral-900">
+                    Research Metadata
+                  </h3>
+                </div>
+                
+                {searchQueries && searchQueries.length > 0 && (
+                  <div className="mb-2">
+                    <p className="font-body text-xs text-neutral-600 mb-1">Search Queries Used:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {searchQueries.map((query, index) => (
+                        <span 
+                          key={index} 
+                          className="bg-iris-50 text-iris-700 px-2 py-1 rounded text-xs font-medium border border-iris-200"
+                        >
+                          {query}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-4 text-xs text-neutral-600">
+                  <span>Status: <span className="font-medium text-green-600">{ragResponse.status}</span></span>
+                  {documentCount !== undefined && (
+                    <span>Documents: <span className="font-medium">{documentCount}</span></span>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className="max-w-none space-y-1">
               {renderContent(displayContent)}
             </div>

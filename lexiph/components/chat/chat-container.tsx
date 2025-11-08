@@ -1,12 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChatHeader } from '@/components/layout/chat-header'
 import { ChatMessages } from './chat-messages'
 import { ChatInput } from './chat-input'
 import { ComplianceCanvas } from './compliance-canvas'
+import { RAGProgress } from './rag-progress'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
+import { useRAGStore } from '@/lib/store/rag-store'
+import { useAuthStore } from '@/lib/store/auth-store'
 import { Message } from '@/types'
+import { AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ChatContainerProps {
   messages: Message[]
@@ -73,22 +78,41 @@ const sampleComplianceReport = `# Compliance Analysis Report
 
 export function ChatContainer({ messages }: ChatContainerProps) {
   const { mode } = useChatModeStore()
+  const { user } = useAuthStore()
+  const { 
+    currentResponse, 
+    loading, 
+    error, 
+    wsEvents, 
+    submitQuery, 
+    clearError 
+  } = useRAGStore()
+  
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasContent, setCanvasContent] = useState(sampleComplianceReport)
 
-  // In compliance mode with canvas, show split view
-  const isComplianceWithCanvas = mode === 'compliance' && showCanvas
-
-  // Simulate showing canvas after compliance query (for demo)
-  // In production, this would be triggered by actual API response
-  useState(() => {
-    if (mode === 'compliance') {
-      // Auto-show canvas for demo purposes
+  // Show canvas when we have a RAG response
+  useEffect(() => {
+    if (mode === 'compliance' && currentResponse) {
+      setShowCanvas(true)
+      setCanvasContent(currentResponse.summary)
+    } else if (mode === 'compliance') {
+      // Show sample for demo if no RAG response yet
       setTimeout(() => setShowCanvas(true), 500)
     } else {
       setShowCanvas(false)
     }
-  })
+  }, [mode, currentResponse])
+
+  // Handle retry for errors
+  const handleRetry = () => {
+    clearError()
+    // Retry last query if available
+    // This would need to be implemented with query history
+  }
+
+  // In compliance mode with canvas, show split view
+  const isComplianceWithCanvas = mode === 'compliance' && showCanvas
 
   return (
     <div className="flex h-screen flex-col bg-slate-50">
@@ -102,6 +126,36 @@ export function ChatContainer({ messages }: ChatContainerProps) {
           } transition-all duration-300`}
         >
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 sm:px-4">
+            {/* RAG Loading State */}
+            {loading && mode === 'compliance' && (
+              <div className="mb-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+                <RAGProgress 
+                  events={wsEvents} 
+                  isComplete={false} 
+                />
+              </div>
+            )}
+            
+            {/* RAG Error State */}
+            {error && mode === 'compliance' && (
+              <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-body text-sm text-red-800">{error}</p>
+                    <Button
+                      onClick={handleRetry}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <ChatMessages messages={messages} />
           </div>
           <ChatInput />
@@ -113,6 +167,9 @@ export function ChatContainer({ messages }: ChatContainerProps) {
             <ComplianceCanvas 
               content={canvasContent}
               fileName="compliance-report"
+              ragResponse={currentResponse || undefined}
+              searchQueries={currentResponse?.search_queries_used}
+              documentCount={currentResponse?.documents_found}
             />
           </div>
         )}

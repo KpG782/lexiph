@@ -15,6 +15,7 @@ interface ChatStore {
   selectChat: (id: string) => void
   deleteChat: (id: string) => Promise<void>
   updateChatTitle: (id: string, title: string) => Promise<void>
+  addRAGMessage: (query: string, response: any) => void
 }
 
 // Mock data for MVP
@@ -161,5 +162,33 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       console.error('Failed to update chat title:', error)
       throw error
     }
+  },
+
+  // Add RAG message to chat history
+  addRAGMessage: (query: string, response: any) => {
+    const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    const userMessage: Message = {
+      id: generateId(),
+      role: 'user',
+      content: query,
+      created_at: new Date().toISOString(),
+    }
+    
+    const assistantMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: response.summary,
+      created_at: new Date().toISOString(),
+      metadata: {
+        ragResponse: response,
+        searchQueries: response.search_queries_used,
+        documentCount: response.documents_found,
+      }
+    }
+    
+    // In production, this would add to Supabase and update state
+    // For MVP, we're just logging
+    console.log('RAG messages added:', { userMessage, assistantMessage })
   }
 }))

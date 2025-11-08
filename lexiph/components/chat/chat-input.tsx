@@ -1,30 +1,61 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Send, Paperclip, X } from 'lucide-react'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
+import { useRAGStore } from '@/lib/store/rag-store'
+import { useAuthStore } from '@/lib/store/auth-store'
 import { ChatModeToggle } from './chat-mode-toggle'
+
+// Debounce utility
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
 
 export function ChatInput() {
   const [message, setMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
   const { mode, uploadedFile, setUploadedFile } = useChatModeStore()
+  const { submitQuery, loading } = useRAGStore()
+  const { user } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Debounced submit for better UX
+  const debouncedSubmit = useCallback(
+    debounce(async (query: string, userId?: string) => {
+      await submitQuery(query, userId)
+    }, 500),
+    []
+  )
+
   const handleSend = async () => {
-    if ((!message.trim() && !uploadedFile) || isSending) return
+    if ((!message.trim() && !uploadedFile) || isSending || loading) return
 
     setIsSending(true)
     
-    // Sample API calls based on mode
+    // Route to appropriate API based on mode
     if (mode === 'general') {
       // General chat API call (sample)
       console.log('Calling general chat API with message:', message)
       await new Promise(resolve => setTimeout(resolve, 500))
     } else {
-      // Compliance API call (sample)
-      console.log('Calling compliance API with file:', uploadedFile?.name, 'and message:', message)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Compliance mode - use RAG API
+      if (message.trim()) {
+        await submitQuery(message.trim(), user?.id)
+      }
+      
+      // If file is uploaded, handle file processing
+      if (uploadedFile) {
+        console.log('Processing compliance file:', uploadedFile.name)
+        // File processing would be implemented here
+      }
     }
     
     // Clear textarea and file after send
@@ -111,7 +142,7 @@ export function ChatInput() {
         )}
 
         {/* Input Area */}
-        <div className="flex items-end gap-2 rounded-lg border-2 border-slate-200 bg-white p-2 sm:p-3 focus-within:border-primary transition-colors">
+        <div className="flex items-end gap-2 rounded-lg border-2 border-slate-200 bg-white p-2 focus-within:border-iris-500 focus-within:ring-2 focus-within:ring-iris-100 transition-all">
           {/* File Upload Button (Compliance Mode Only) */}
           {mode === 'compliance' && (
             <>
@@ -126,7 +157,7 @@ export function ChatInput() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-lg p-2.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                 aria-label="Upload compliance document"
                 type="button"
               >
@@ -144,14 +175,14 @@ export function ChatInput() {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={isSending}
+            disabled={isSending || loading}
             rows={1}
             aria-label={placeholder}
             aria-describedby="message-hint"
-            className="flex-1 resize-none bg-transparent px-2 py-2 text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none disabled:opacity-50"
+            className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none disabled:opacity-50 transition-opacity"
             style={{
-              minHeight: '24px',
-              maxHeight: '200px',
+              minHeight: '36px',
+              maxHeight: '100px',
             }}
           />
           <span id="message-hint" className="sr-only">
@@ -160,13 +191,13 @@ export function ChatInput() {
           
           <button
             onClick={handleSend}
-            disabled={(!message.trim() && !uploadedFile) || isSending}
-            className="rounded-lg bg-primary p-2.5 sm:p-3 text-primary-foreground transition-colors hover:bg-iris-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label={isSending ? 'Sending message...' : 'Send message'}
+            disabled={(!message.trim() && !uploadedFile) || isSending || loading}
+            className="rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-iris-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 min-h-[40px] min-w-[40px] flex items-center justify-center"
+            aria-label={isSending || loading ? 'Sending message...' : 'Send message'}
             type="submit"
           >
-            <Send className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-            <span className="sr-only">{isSending ? 'Sending...' : 'Send'}</span>
+            <Send className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">{isSending || loading ? 'Sending...' : 'Send'}</span>
           </button>
         </div>
       </div>
