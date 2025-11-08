@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { Chat } from '@/types'
+import { Chat, Message } from '@/types'
 
 interface ChatStore {
   // State

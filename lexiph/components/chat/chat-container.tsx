@@ -229,65 +229,6 @@ Your document is being analyzed for compliance with relevant Philippine laws and
 *This is an automated analysis. Human review recommended.*`
 }
 
-// Sample compliance report for demo
-const sampleComplianceReport = `# Compliance Analysis Report
-
-## Document Summary
-**File:** sample-document.pdf  
-**Analysis Date:** ${new Date().toLocaleDateString()}  
-**Status:** ✅ Compliant
-
-## Key Findings
-
-### 1. Data Privacy Compliance
-- **Status:** Compliant with Data Privacy Act of 2012
-- **Requirements Met:**
-  - Personal data collection procedures documented
-  - Consent mechanisms in place
-  - Data retention policies defined
-
-### 2. Labor Code Requirements
-- **Status:** Partially Compliant
-- **Action Items:**
-  - Update employee handbook to include remote work policies
-  - Review overtime compensation structure
-  - Implement mandatory rest day tracking
-
-### 3. Tax Compliance
-- **Status:** Compliant
-- **Requirements Met:**
-  - BIR registration current
-  - Withholding tax procedures documented
-  - VAT compliance verified
-
-## Recommendations
-
-1. **Immediate Actions**
-   - Update employee handbook within 30 days
-   - Schedule labor compliance training for HR team
-
-2. **Long-term Improvements**
-   - Implement automated compliance monitoring system
-   - Quarterly compliance audits recommended
-
-## Risk Assessment
-
-| Area | Risk Level | Priority |
-|------|-----------|----------|
-| Data Privacy | Low | Medium |
-| Labor Code | Medium | High |
-| Tax Compliance | Low | Low |
-
-## Next Steps
-
-1. Review and implement recommended changes
-2. Schedule follow-up compliance check in 90 days
-3. Maintain documentation of all compliance activities
-
----
-*This is a sample compliance report generated for demonstration purposes.*
-`
-
 export function ChatContainer({ messages: initialMessages }: ChatContainerProps) {
   const { mode } = useChatModeStore()
   const { user } = useAuthStore()
@@ -319,13 +260,11 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       setCanvasContent('')
       setCanvasFileName('')
     }
-    // Don't auto-show canvas in compliance mode - wait for file upload
   }, [mode, currentResponse])
 
   // Add RAG responses to messages in general mode
   useEffect(() => {
     if (currentResponse && mode === 'general') {
-      // Add user message if we have a query
       if (currentQuery) {
         const userMessage: Message = {
           id: `user-${Date.now()}`,
@@ -349,22 +288,24 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
 
   // Listen for query submissions
   useEffect(() => {
-    const handleQuerySubmit = (event: CustomEvent) => {
-      const { query } = event.detail
+    const handleQuerySubmit = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { query } = customEvent.detail
       setCurrentQuery(query)
     }
 
-    window.addEventListener('query-submitted', handleQuerySubmit as EventListener)
+    window.addEventListener('query-submitted', handleQuerySubmit)
     
     return () => {
-      window.removeEventListener('query-submitted', handleQuerySubmit as EventListener)
+      window.removeEventListener('query-submitted', handleQuerySubmit)
     }
   }, [])
 
-  // Listen for file upload events
+  // Listen for file upload and deep search events
   useEffect(() => {
-    const handleFileUpload = async (event: CustomEvent) => {
-      const { file, query } = event.detail
+    const handleFileUpload = async (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { file, query } = customEvent.detail
       
       console.log('File uploaded:', file.name, 'Query:', query)
       
@@ -394,16 +335,18 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       setTimeout(() => document.body.removeChild(liveRegion), 1000)
     }
 
-    const handleDeepSearchComplete = (event: CustomEvent) => {
-      const { query, result, file } = event.detail
+    // DEEP SEARCH EVENT HANDLER - This is where deep search results are processed
+    const handleDeepSearchComplete = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { query, result, file } = customEvent.detail
       
       console.log('Deep search completed:', query, result)
       
-      // Store deep search result
+      // Store deep search result for display
       setDeepSearchResult(result)
       
       if (mode === 'compliance') {
-        // Compliance mode: show in canvas
+        // COMPLIANCE MODE: Show deep search results in canvas
         if (file) {
           setShowCanvas(true)
           setCanvasFileName(file.name)
@@ -415,7 +358,7 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
           }
         }
       } else {
-        // General mode: add to messages
+        // GENERAL MODE: Add deep search results to messages
         const userMessage: Message = {
           id: `user-deep-${Date.now()}`,
           role: 'user',
@@ -423,6 +366,7 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
           created_at: new Date().toISOString(),
         }
         
+        // Deep search enhanced response
         const assistantMessage: Message = {
           id: `assistant-deep-${Date.now()}`,
           role: 'assistant',
@@ -439,14 +383,14 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       }
     }
 
-    window.addEventListener('file-uploaded', handleFileUpload as EventListener)
-    window.addEventListener('deep-search-complete', handleDeepSearchComplete as EventListener)
+    window.addEventListener('file-uploaded', handleFileUpload)
+    window.addEventListener('deep-search-complete', handleDeepSearchComplete)
     
     return () => {
-      window.removeEventListener('file-uploaded', handleFileUpload as EventListener)
-      window.removeEventListener('deep-search-complete', handleDeepSearchComplete as EventListener)
+      window.removeEventListener('file-uploaded', handleFileUpload)
+      window.removeEventListener('deep-search-complete', handleDeepSearchComplete)
     }
-  }, [canvasContent])
+  }, [mode, canvasContent])
 
   // Toggle canvas visibility
   const toggleCanvas = () => {

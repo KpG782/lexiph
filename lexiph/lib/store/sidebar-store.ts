@@ -40,7 +40,7 @@ export const useSidebarStore = create<SidebarStore>()(
     }),
     {
       name: 'sidebar-storage', // localStorage key
-      partialState: (state) => ({ isOpen: state.isOpen }) // Only persist isOpen state
+      partialize: (state) => ({ isOpen: state.isOpen }) // Only persist isOpen state
     }
   )
 )
