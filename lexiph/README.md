@@ -3,6 +3,11 @@
 > AI-powered legal compliance assistant for Philippine legislation and regulations
 
 LexInsight is a modern web application that helps users understand and comply with Philippine laws through AI-powered document analysis and intelligent Q&A.
+# LexInsights - Philippine Legal Compliance Assistant
+
+> AI-powered legal compliance assistant for Philippine legislation and regulations
+
+LexInsights is a modern web application that helps users understand and comply with Philippine laws through AI-powered document analysis and intelligent Q&A.
 
 ---
 

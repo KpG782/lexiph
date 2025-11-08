@@ -509,7 +509,7 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
             
             {/* Enhanced Typing Indicator */}
             {(loading || isProcessing) && (
-              <div className="my-4 flex justify-start px-4">
+              <div className="mt-4 flex justify-start px-4">
                 <TypingIndicator />
               </div>
             )}
