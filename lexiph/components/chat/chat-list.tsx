@@ -1,17 +1,53 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useChatStore } from '@/lib/store/chat-store'
 import { useSidebarStore } from '@/lib/store/sidebar-store'
 import { ChatListItem } from './chat-list-item'
 import { MessageSquare, Search, X } from 'lucide-react'
+
+// Loading skeleton for new chat creation
+function ChatListSkeleton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="w-full rounded-lg px-3 py-2.5 bg-slate-100 border-2 border-iris-200"
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 h-4 w-4 rounded bg-slate-200 animate-pulse" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-slate-200 animate-pulse" />
+          <div className="h-3 w-1/2 rounded bg-slate-200 animate-pulse" />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 export function ChatList() {
   const router = useRouter()
   const { chats, activeChat, selectChat } = useChatStore()
   const { isMobile, close } = useSidebarStore()
   const [searchQuery, setSearchQuery] = useState('')
+  const [isCreatingChat, setIsCreatingChat] = useState(false)
+
+  // Listen for chat creation events
+  useEffect(() => {
+    const handleChatCreating = () => setIsCreatingChat(true)
+    const handleChatCreated = () => setIsCreatingChat(false)
+    
+    window.addEventListener('chat-creating', handleChatCreating)
+    window.addEventListener('chat-created', handleChatCreated)
+    
+    return () => {
+      window.removeEventListener('chat-creating', handleChatCreating)
+      window.removeEventListener('chat-created', handleChatCreated)
+    }
+  }, [])
   
   const handleSelectChat = (id: string) => {
     // Update active chat in store
@@ -82,7 +118,7 @@ export function ChatList() {
 
       {/* Chat List */}
       <div
-        className="flex-1 overflow-y-auto px-3 py-2"
+        className="flex-1 overflow-y-auto p-4 sm:p-6"
         role="list"
         aria-label="Chat conversations"
       >
@@ -96,14 +132,22 @@ export function ChatList() {
           </div>
         ) : (
           <div className="space-y-1">
-            {filteredChats.map((chat) => (
-              <ChatListItem
-                key={chat.id}
-                chat={chat}
-                isActive={chat.id === activeChat?.id}
-                onClick={() => handleSelectChat(chat.id)}
-              />
-            ))}
+            {/* Show loading skeleton when creating new chat */}
+            <AnimatePresence>
+              {isCreatingChat && <ChatListSkeleton />}
+            </AnimatePresence>
+            
+            {/* Existing chats */}
+            <AnimatePresence>
+              {filteredChats.map((chat) => (
+                <ChatListItem
+                  key={chat.id}
+                  chat={chat}
+                  isActive={chat.id === activeChat?.id}
+                  onClick={() => handleSelectChat(chat.id)}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

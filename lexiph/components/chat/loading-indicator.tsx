@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface LoadingIndicatorProps {
@@ -27,14 +28,23 @@ export function LoadingIndicator({
   }
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className={cn('flex items-center gap-2 text-slate-600', className)}
       role="status"
       aria-live="polite"
     >
-      <Loader2 className={cn(sizeClasses[size], 'animate-spin')} aria-hidden="true" />
-      <span className={textSizeClasses[size]}>{message}</span>
-    </div>
+      <Loader2 className={cn(sizeClasses[size], 'animate-spin text-iris-600')} aria-hidden="true" />
+      <motion.span 
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+        className={textSizeClasses[size]}
+      >
+        {message}
+      </motion.span>
+    </motion.div>
   )
 }
 
@@ -43,8 +53,17 @@ interface TypingIndicatorProps {
 }
 
 export function TypingIndicator({ className }: TypingIndicatorProps) {
+  const dotVariants = {
+    initial: { y: 0 },
+    animate: { y: -8 }
+  }
+
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
       className={cn('flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-iris-50 to-purple-50 rounded-xl border-2 border-iris-200 w-fit shadow-sm', className)}
       role="status"
       aria-live="polite"
@@ -52,16 +71,32 @@ export function TypingIndicator({ className }: TypingIndicatorProps) {
     >
       {/* Animated dots */}
       <div className="flex gap-1.5">
-        <span className="h-2.5 w-2.5 bg-gradient-to-br from-iris-500 to-purple-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0ms' }} />
-        <span className="h-2.5 w-2.5 bg-gradient-to-br from-iris-500 to-purple-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '150ms' }} />
-        <span className="h-2.5 w-2.5 bg-gradient-to-br from-iris-500 to-purple-500 rounded-full animate-bounce shadow-sm" style={{ animationDelay: '300ms' }} />
+        {[0, 1, 2].map((index) => (
+          <motion.span
+            key={index}
+            variants={dotVariants}
+            initial="initial"
+            animate="animate"
+            transition={{
+              duration: 0.5,
+              repeat: Infinity,
+              repeatType: "reverse",
+              delay: index * 0.15
+            }}
+            className="h-2.5 w-2.5 bg-gradient-to-br from-iris-500 to-purple-500 rounded-full shadow-sm"
+          />
+        ))}
       </div>
       
       {/* Text with animation */}
-      <span className="text-sm font-medium text-iris-700 animate-pulse">
+      <motion.span 
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+        className="text-sm font-medium text-iris-700"
+      >
         AI is thinking...
-      </span>
-    </div>
+      </motion.span>
+    </motion.div>
   )
 }
 
@@ -99,7 +134,11 @@ export function EnhancedLoading({ stage = 'searching', progress, className }: En
   const current = stageInfo[stage]
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
       className={cn('flex flex-col gap-3 px-5 py-4 bg-gradient-to-r', current.bgColor, 'rounded-xl border-2', current.borderColor, 'w-full max-w-md shadow-md', className)}
       role="status"
       aria-live="polite"
@@ -107,16 +146,24 @@ export function EnhancedLoading({ stage = 'searching', progress, className }: En
     >
       {/* Header with icon and text */}
       <div className="flex items-center gap-3">
-        <span className="text-2xl animate-pulse">{current.icon}</span>
+        <motion.span 
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="text-2xl"
+        >
+          {current.icon}
+        </motion.span>
         <span className="text-sm font-semibold text-slate-700">{current.text}</span>
       </div>
 
       {/* Progress bar */}
       {progress !== undefined && (
         <div className="w-full h-2 bg-white/50 rounded-full overflow-hidden">
-          <div 
-            className={cn('h-full bg-gradient-to-r', current.color, 'transition-all duration-500 ease-out rounded-full')}
-            style={{ width: `${progress}%` }}
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className={cn('h-full bg-gradient-to-r', current.color, 'rounded-full')}
           />
         </div>
       )}
@@ -124,24 +171,21 @@ export function EnhancedLoading({ stage = 'searching', progress, className }: En
       {/* Animated wave effect */}
       <div className="flex gap-1 justify-center">
         {[...Array(8)].map((_, i) => (
-          <div
+          <motion.div
             key={i}
-            className={cn('w-1 bg-gradient-to-t', current.color, 'rounded-full')}
-            style={{
-              height: '4px',
-              animation: 'wave 1.5s ease-in-out infinite',
-              animationDelay: `${i * 0.1}s`
+            animate={{ 
+              height: ['4px', '16px', '4px']
             }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.1
+            }}
+            className={cn('w-1 bg-gradient-to-t', current.color, 'rounded-full')}
           />
         ))}
       </div>
-
-      <style jsx>{`
-        @keyframes wave {
-          0%, 100% { height: 4px; }
-          50% { height: 16px; }
-        }
-      `}</style>
-    </div>
+    </motion.div>
   )
 }

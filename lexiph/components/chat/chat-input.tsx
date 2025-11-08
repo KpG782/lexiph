@@ -5,6 +5,7 @@ import { Send, Paperclip, X, Loader2, Sparkles } from 'lucide-react'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
+import { useSidebarStore } from '@/lib/store/sidebar-store'
 import { ChatModeToggle } from './chat-mode-toggle'
 import { performDeepSearch } from '@/lib/services/deep-search-api'
 
@@ -27,6 +28,7 @@ export function ChatInput() {
   const { mode, uploadedFile, setUploadedFile } = useChatModeStore()
   const { submitQuery, loading } = useRAGStore()
   const { user } = useAuthStore()
+  const { isMobile, close } = useSidebarStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Debounced submit for better UX
@@ -39,6 +41,11 @@ export function ChatInput() {
 
   const handleSend = async () => {
     if ((!message.trim() && !uploadedFile) || isSending || loading) return
+
+    // Close sidebar on mobile when sending message
+    if (isMobile) {
+      close()
+    }
 
     setIsSending(true)
     
@@ -288,14 +295,14 @@ export function ChatInput() {
           <button
             onClick={handleSend}
             disabled={(!message.trim() && !uploadedFile) || isSending || loading}
-            className="rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-iris-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 min-h-[40px] min-w-[40px] flex items-center justify-center"
+            className="rounded-lg bg-primary p-2 text-primary-foreground transition-all duration-200 hover:bg-iris-700 hover:shadow-md hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:hover:scale-100 disabled:hover:shadow-none min-h-[40px] min-w-[40px] flex items-center justify-center"
             aria-label={isSending || loading ? 'Sending message...' : 'Send message'}
             type="submit"
           >
             {isSending || loading ? (
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             ) : (
-              <Send className="h-5 w-5" aria-hidden="true" />
+              <Send className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
             )}
             <span className="sr-only">{isSending || loading ? 'Sending...' : 'Send'}</span>
           </button>

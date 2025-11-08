@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ChatHeader } from '@/components/layout/chat-header'
 import { ChatMessages } from './chat-messages'
 import { ChatInput } from './chat-input'
@@ -420,81 +421,135 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
         >
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
             {/* RAG Loading State */}
-            {loading && mode === 'compliance' && (
-              <div className="mb-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-                <RAGProgress 
-                  events={wsEvents} 
-                  isComplete={false} 
-                />
-              </div>
-            )}
+            <AnimatePresence>
+              {loading && mode === 'compliance' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm"
+                >
+                  <RAGProgress 
+                    events={wsEvents} 
+                    isComplete={false} 
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {/* RAG Error State */}
-            {error && mode === 'compliance' && (
-              <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-body text-sm text-red-800">{error}</p>
-                    <Button
-                      onClick={handleRetry}
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                    >
-                      Retry
-                    </Button>
+            <AnimatePresence>
+              {error && mode === 'compliance' && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-body text-sm text-red-800">{error}</p>
+                      <Button
+                        onClick={handleRetry}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                      >
+                        Retry
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             <ChatMessages messages={messages} />
             
             {/* Enhanced Typing Indicator */}
-            {(loading || isProcessing) && (
-              <div className="mt-4 flex justify-start px-4">
-                <TypingIndicator />
-              </div>
-            )}
+            <AnimatePresence>
+              {(loading || isProcessing) && (
+                <div className="mt-4 flex justify-start px-4">
+                  <TypingIndicator />
+                </div>
+              )}
+            </AnimatePresence>
           </div>
           <ChatInput />
         </div>
 
         {/* Canvas Toggle Button - Icon Only */}
-        {mode === 'compliance' && canvasContent && canvasFileName && (
-          <button
-            onClick={toggleCanvas}
-            className={cn(
-              'fixed right-4 top-20 z-30 rounded-full bg-iris-600 p-2.5 text-white shadow-md transition-all hover:bg-iris-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2',
-              showCanvas && 'lg:right-[calc(60%+1rem)]'
-            )}
-            aria-label={showCanvas ? 'Close compliance analysis' : 'Open compliance analysis'}
-            title={showCanvas ? 'Close Analysis' : 'View Analysis'}
-          >
-            {showCanvas ? (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-          </button>
-        )}
+        <AnimatePresence>
+          {mode === 'compliance' && canvasContent && canvasFileName && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              onClick={toggleCanvas}
+              className={cn(
+                'fixed right-4 top-20 z-30 rounded-full bg-iris-600 p-2.5 text-white shadow-md transition-all hover:bg-iris-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2',
+                showCanvas && 'lg:right-[calc(60%+1rem)]'
+              )}
+              aria-label={showCanvas ? 'Close compliance analysis' : 'Open compliance analysis'}
+              title={showCanvas ? 'Close Analysis' : 'View Analysis'}
+            >
+              <AnimatePresence mode="wait">
+                {showCanvas ? (
+                  <motion.svg 
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="h-4 w-4" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </motion.svg>
+                ) : (
+                  <motion.div
+                    key="open"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <FileText className="h-4 w-4" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Compliance Canvas - 60% width, only shown when there's content */}
-        {mode === 'compliance' && showCanvas && canvasContent && (
-          <div className="hidden lg:block lg:w-[60%] relative">
-            <ComplianceCanvas 
-              content={canvasContent}
-              fileName={canvasFileName}
-              ragResponse={currentResponse || undefined}
-              searchQueries={currentResponse?.search_queries_used}
-              documentCount={currentResponse?.documents_found}
-              deepSearchResult={deepSearchResult}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {mode === 'compliance' && showCanvas && canvasContent && (
+            <motion.div 
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="hidden lg:block lg:w-[60%] relative"
+            >
+              <ComplianceCanvas 
+                content={canvasContent}
+                fileName={canvasFileName}
+                ragResponse={currentResponse || undefined}
+                searchQueries={currentResponse?.search_queries_used}
+                documentCount={currentResponse?.documents_found}
+                deepSearchResult={deepSearchResult}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
