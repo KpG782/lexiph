@@ -7,7 +7,7 @@ export default function Home() {
       <main className="flex flex-col items-center justify-center space-y-6 sm:space-y-8 px-4 text-center">
         <div className="space-y-3 sm:space-y-4">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900">
-            LexInsights
+            LexInsight
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 max-w-md px-4">
             Your Philippine legal compliance assistant

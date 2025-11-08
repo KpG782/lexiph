@@ -51,7 +51,7 @@ export async function ragSummary(query: string, userId?: string): Promise<RAGRes
       },
       body: JSON.stringify({
         query,
-        user_id: userId || 'lexinsights-user',
+        user_id: userId || 'lexinsight-user',
       }),
       signal: controller.signal,
     })
