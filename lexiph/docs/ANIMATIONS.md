@@ -2,7 +2,7 @@
 
 ## Overview
 
-LexiPH uses Framer Motion for smooth, performant animations that enhance user experience while respecting accessibility preferences.
+LexInSight uses Framer Motion for smooth, performant animations that enhance user experience while respecting accessibility preferences.
 
 ## Installation
 

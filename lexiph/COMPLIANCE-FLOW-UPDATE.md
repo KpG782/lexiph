@@ -133,7 +133,7 @@ Following best practices for AI-generated content:
 
 ### New Files:
 ```
-lexiph/
+LexInSight/
 ├── public/sample-documents/
 │   └── barangay-disaster-plan.md          # Sample document
 ├── components/chat/
@@ -143,7 +143,7 @@ lexiph/
 
 ### Modified Files:
 ```
-lexiph/
+LexInSight/
 ├── lib/store/
 │   └── chat-store.ts                      # Updated mock chats
 ├── components/chat/

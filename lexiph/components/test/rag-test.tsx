@@ -27,7 +27,7 @@ export function RAGTestComponent() {
     try {
       const result = await queryRAG({
         query: query.trim(),
-        user_id: 'lexiph_test_user'
+        user_id: 'LexInSight_test_user'
       })
       setResponse(result)
     } catch (err) {

@@ -36,7 +36,7 @@ export function LoginForm() {
       <div className="space-y-2 text-center">
         <h1 className="text-2xl sm:text-3xl font-bold">Welcome back</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Enter your credentials to access LexiPH
+          Enter your credentials to access LexInSight
         </p>
       </div>
 

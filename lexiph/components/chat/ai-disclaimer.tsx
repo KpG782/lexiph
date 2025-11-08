@@ -49,7 +49,7 @@ export function AIDisclaimer() {
               <div className="mt-3 p-2 bg-amber-100 rounded border border-amber-300">
                 <p className="font-semibold">⚖️ Limitation of Liability</p>
                 <p className="mt-1">
-                  The creators and operators of LexiPH assume no liability for decisions made based on this analysis. 
+                  The creators and operators of LexInSight assume no liability for decisions made based on this analysis. 
                   Users bear full responsibility for ensuring compliance with all applicable laws and regulations.
                 </p>
               </div>

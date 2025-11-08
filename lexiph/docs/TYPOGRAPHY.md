@@ -1,8 +1,8 @@
-# Typography System - LexiPH
+# Typography System - LexInSight
 
 ## Overview
 
-LexiPH uses a dual-font system combining **Outfit** for headings and **Manrope** for body text, ensuring excellent readability and visual hierarchy.
+LexInSight uses a dual-font system combining **Outfit** for headings and **Manrope** for body text, ensuring excellent readability and visual hierarchy.
 
 ## Font Families
 
@@ -147,7 +147,7 @@ color: #6C838F;  /* neutral-500 - 4.8:1 contrast */
 ```tsx
 <header>
   <h1 className="font-display text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
-    LexiPH
+    LexInSight
   </h1>
 </header>
 ```
@@ -157,7 +157,7 @@ color: #6C838F;  /* neutral-500 - 4.8:1 contrast */
 ```tsx
 <header>
   <h1 className="font-display text-lg font-semibold text-neutral-900">
-    Lexiph
+    LexInSight
   </h1>
 </header>
 ```

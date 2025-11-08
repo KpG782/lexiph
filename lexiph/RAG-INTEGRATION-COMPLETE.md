@@ -97,7 +97,7 @@ NEXT_PUBLIC_RAG_WS_URL=ws://66.181.46.44:7767
 
 ### New Files
 ```
-lexiph/
+LexInSight/
 ├── lib/
 │   ├── services/
 │   │   └── rag-api.ts                    # API service layer
@@ -117,7 +117,7 @@ lexiph/
 
 ### Modified Files
 ```
-lexiph/
+LexInSight/
 ├── .env.local                            # Added RAG URLs
 ├── types/index.ts                        # Extended Message type
 ├── lib/store/

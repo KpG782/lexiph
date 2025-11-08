@@ -2,7 +2,7 @@
 
 ## Overview
 
-LexiPH uses Next.js's built-in font optimization for Manrope and Outfit fonts, providing better performance, automatic font loading, and no CSS parsing errors.
+LexInSight uses Next.js's built-in font optimization for Manrope and Outfit fonts, providing better performance, automatic font loading, and no CSS parsing errors.
 
 ## Implementation
 

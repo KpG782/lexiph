@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Philippine Legislation Research API (RAG API) is now integrated into LexiPH, providing intelligent legislation search and summarization capabilities in compliance mode.
+The Philippine Legislation Research API (RAG API) is now integrated into LexInSight, providing intelligent legislation search and summarization capabilities in compliance mode.
 
 ## Quick Start
 

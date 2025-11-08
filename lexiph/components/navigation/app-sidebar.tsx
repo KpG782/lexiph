@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useSidebarStore } from '@/lib/store/sidebar-store'
+import { useChatStore } from '@/lib/store/chat-store'
 
 interface NavItem {
   icon: React.ComponentType<{ className?: string }>
@@ -21,25 +22,35 @@ export function AppSidebar() {
   const { user } = useAuthStore()
   const { toggle } = useSidebarStore()
 
+  const handleNewChat = async () => {
+    const { createChat } = useChatStore.getState()
+    try {
+      const newChat = await createChat('New Chat')
+      router.push(`/chat/${newChat.id}`)
+    } catch (error) {
+      console.error('Failed to create new chat:', error)
+    }
+  }
+
   const navItems: NavItem[] = [
     {
       icon: MessageSquare,
-      label: 'Chat',
-      action: toggle, // Toggle chat sidebar instead of navigation
+      label: 'Chat History',
+      action: toggle, // Toggle chat sidebar
     },
     {
       icon: PenSquare,
       label: 'New Chat',
-      href: '/chat/new',
+      action: handleNewChat,
     },
     {
       icon: Search,
-      label: 'Search',
+      label: 'Search Documents',
       href: '/search',
     },
     {
       icon: Image,
-      label: 'Gallery',
+      label: 'Document Gallery',
       href: '/gallery',
     },
   ]

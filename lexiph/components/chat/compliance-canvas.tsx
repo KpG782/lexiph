@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck } from 'lucide-react'
+import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
 import { AIDisclaimer, AIDisclaimerBadge } from './ai-disclaimer'
 import { cn } from '@/lib/utils'
 import { type RAGResponse } from '@/lib/services/rag-api'
+import { exportToDocx } from '@/lib/utils/docx-export'
 
 interface ComplianceCanvasProps {
   content: string
@@ -28,6 +29,8 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
   
   const [editContent, setEditContent] = useState('')
   const [showHistory, setShowHistory] = useState(false)
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const currentVersion = getCurrentVersion()
 
   // Initialize with current version or new content
@@ -47,7 +50,7 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       setEditContent(currentVersion.content)
     }
   }, [currentVersion])
-  const handleDownload = () => {
+  const handleDownloadMarkdown = () => {
     const contentToDownload = currentVersion?.content || content
     const blob = new Blob([contentToDownload], { type: 'text/markdown' })
     const url = URL.createObjectURL(blob)
@@ -58,6 +61,25 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+    setShowDownloadMenu(false)
+  }
+
+  const handleDownloadDocx = async () => {
+    setIsDownloading(true)
+    try {
+      const contentToDownload = currentVersion?.content || content
+      await exportToDocx({
+        content: contentToDownload,
+        fileName: fileName || 'compliance-report',
+        title: 'Compliance Analysis Report',
+      })
+      setShowDownloadMenu(false)
+    } catch (error) {
+      console.error('Error exporting to DOCX:', error)
+      alert('Failed to export to DOCX. Please try again.')
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const handleSave = () => {
@@ -355,17 +377,60 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
               </Button>
             )}
 
-            {/* Download Button */}
-            <Button
-              onClick={handleDownload}
-              variant="outline"
-              size="sm"
-              className="h-9 gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              aria-label={`Download compliance report as ${fileName || 'compliance-report'}.md`}
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              <span className="text-sm">Download</span>
-            </Button>
+            {/* Download Button with Dropdown */}
+            <div className="relative">
+              <Button
+                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                aria-label="Download compliance report"
+                aria-expanded={showDownloadMenu}
+                aria-haspopup="true"
+                disabled={isDownloading}
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+                <span className="text-sm">Download</span>
+                <ChevronDown className="h-3 w-3" aria-hidden="true" />
+              </Button>
+              
+              {showDownloadMenu && (
+                <>
+                  {/* Backdrop to close menu */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowDownloadMenu(false)}
+                    aria-hidden="true"
+                  />
+                  
+                  {/* Dropdown Menu */}
+                  <div 
+                    className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg border border-slate-200 bg-white shadow-lg"
+                    role="menu"
+                    aria-label="Download format options"
+                  >
+                    <button
+                      onClick={handleDownloadMarkdown}
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-t-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      role="menuitem"
+                      disabled={isDownloading}
+                    >
+                      <FileText className="h-4 w-4" aria-hidden="true" />
+                      <span>Markdown (.md)</span>
+                    </button>
+                    <button
+                      onClick={handleDownloadDocx}
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-b-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      role="menuitem"
+                      disabled={isDownloading}
+                    >
+                      <Download className="h-4 w-4" aria-hidden="true" />
+                      <span>{isDownloading ? 'Exporting...' : 'Word (.docx)'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
@@ -393,11 +458,27 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
             tabIndex={0}
             aria-label="Compliance report content"
           >
-            {/* AI Disclaimer - Always show at top */}
-            <AIDisclaimer />
+            {/* Loading State */}
+            {!displayContent && (
+              <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <div className="relative">
+                  <div className="h-16 w-16 rounded-full border-4 border-slate-200"></div>
+                  <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-iris-600 border-t-transparent animate-spin"></div>
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-lg font-semibold text-slate-900">Analyzing Document...</p>
+                  <p className="text-sm text-slate-600">
+                    {fileName ? `Processing ${fileName}` : 'Generating compliance report'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* AI Disclaimer - Always show at top when content is ready */}
+            {displayContent && <AIDisclaimer />}
 
             {/* RAG Metadata Section */}
-            {ragResponse && (
+            {displayContent && ragResponse && (
               <div className="mb-6 pb-4 border-b border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
                   <Search className="h-4 w-4 text-iris-600" aria-hidden="true" />
@@ -432,9 +513,11 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
               </div>
             )}
             
-            <div className="max-w-none space-y-1">
-              {renderContent(displayContent)}
-            </div>
+            {displayContent && (
+              <div className="max-w-none space-y-1">
+                {renderContent(displayContent)}
+              </div>
+            )}
           </article>
         )}
       </div>

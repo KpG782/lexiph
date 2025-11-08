@@ -2,7 +2,7 @@
 
 ## Overview
 
-LexiPH uses a comprehensive text truncation and responsive typography system to ensure content displays properly across all screen sizes.
+LexInSight uses a comprehensive text truncation and responsive typography system to ensure content displays properly across all screen sizes.
 
 ## Truncation Utilities
 

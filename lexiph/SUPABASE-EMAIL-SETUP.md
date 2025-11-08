@@ -12,8 +12,8 @@ I've added email verification to your app with these new pages:
 ## 🔧 What You Need to Configure in Supabase
 
 Based on your screenshot, I can see you already have:
-- **Site URL:** `https://lexiph.vercel.app`
-- **Redirect URL:** `https://lexiph.vercel.app/**`
+- **Site URL:** `https://LexInSight.vercel.app`
+- **Redirect URL:** `https://LexInSight.vercel.app/**`
 
 ### Step 1: Update Email Templates
 
@@ -30,7 +30,7 @@ Update the confirmation link to use your callback page:
 
 **Change to:**
 ```
-https://lexiph.vercel.app/auth/callback#access_token={{ .Token }}&type=signup
+https://LexInSight.vercel.app/auth/callback#access_token={{ .Token }}&type=signup
 ```
 
 Or use this simpler version:
@@ -49,8 +49,8 @@ Make sure these are enabled:
 ### Step 3: Configure Redirect URLs (Already Done! ✅)
 
 You already have this configured correctly:
-- Site URL: `https://lexiph.vercel.app`
-- Redirect URLs: `https://lexiph.vercel.app/**`
+- Site URL: `https://LexInSight.vercel.app`
+- Redirect URLs: `https://LexInSight.vercel.app/**`
 
 For local development, you may want to add:
 - `http://localhost:3000/**`
@@ -135,12 +135,12 @@ Here's a complete example for the "Confirm signup" template:
 
 **Subject:**
 ```
-Confirm Your Email - LexiPH
+Confirm Your Email - LexInSight
 ```
 
 **Body (HTML):**
 ```html
-<h2>Welcome to LexiPH!</h2>
+<h2>Welcome to LexInSight!</h2>
 <p>Thanks for signing up. Please confirm your email address by clicking the button below:</p>
 <p>
   <a href="{{ .SiteURL }}/auth/callback#access_token={{ .Token }}&type=signup" 
@@ -157,8 +157,8 @@ Confirm Your Email - LexiPH
 ## 🚀 Production vs Development
 
 ### Production (Vercel)
-- Site URL: `https://lexiph.vercel.app`
-- Callback: `https://lexiph.vercel.app/auth/callback`
+- Site URL: `https://LexInSight.vercel.app`
+- Callback: `https://LexInSight.vercel.app/auth/callback`
 
 ### Development (Local)
 - Site URL: `http://localhost:3000`

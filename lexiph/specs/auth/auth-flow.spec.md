@@ -1,7 +1,7 @@
 # Authentication Flow Specification
 
 ## Overview
-LexiPH uses Supabase Auth with email/password authentication.
+LexInSight uses Supabase Auth with email/password authentication.
 
 ## User Stories
 - As a user, I can sign up with email and password
