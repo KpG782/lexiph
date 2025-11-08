@@ -13,14 +13,14 @@ import { AppSidebar } from '@/components/navigation/app-sidebar'
 import { Button } from '@/components/ui/button'
 import { Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Message } from '@/types'
+import type { Message } from '@/types'
 
 // Mock messages for MVP demonstration
 const mockMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: 'Hello! I\'m LexiPH, your Philippine legal compliance assistant. How can I help you today?',
+    content: 'Hello! I\'m LexInsights, your Philippine legal compliance assistant. How can I help you today?',
     created_at: new Date().toISOString(),
   },
 ]
@@ -37,11 +37,6 @@ export default function ChatPage() {
     const handleResize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      
-      // On desktop, ensure sidebar is open by default
-      if (!mobile && !isOpen) {
-        open()
-      }
     }
 
     // Set initial value
@@ -52,7 +47,7 @@ export default function ChatPage() {
 
     // Cleanup
     return () => window.removeEventListener('resize', handleResize)
-  }, [setIsMobile, isOpen, open])
+  }, [setIsMobile])
 
   // Escape key handler to close sidebar on mobile
   useEffect(() => {
@@ -129,11 +124,10 @@ export default function ChatPage() {
       {/* Main Content Area */}
       <main
         className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          // Add left margin for app sidebar on desktop
-          !isMobile && 'ml-16',
-          // Add left margin for chat sidebar on desktop when open
-          isOpen && !isMobile && 'ml-[calc(16rem+280px)]'
+          'flex flex-1 flex-col transition-all duration-300 bg-slate-50',
+          // Desktop: Add left margin for app sidebar (64px) + chat sidebar (280px) when open
+          !isMobile && !isOpen && 'ml-16',
+          !isMobile && isOpen && 'ml-[344px]'
         )}
       >
         {/* Mobile Menu Button - visible only on mobile */}
@@ -150,11 +144,6 @@ export default function ChatPage() {
             </Button>
           </div>
         )}
-        
-        {/* Demo banner */}
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 sm:py-3 text-center text-xs sm:text-sm text-blue-800">
-          This is a demo - AI chat coming soon
-        </div>
         
         <ChatContainer messages={mockMessages} />
       </main>

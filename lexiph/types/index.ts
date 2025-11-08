@@ -10,6 +10,17 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   created_at: string
+  metadata?: {
+    ragResponse?: {
+      status: string
+      query: string
+      summary: string
+      search_queries_used: string[]
+      documents_found: number
+    }
+    searchQueries?: string[]
+    documentCount?: number
+  }
 }
 
 export interface Chat {

@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,11 +34,32 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-md space-y-6 p-4 sm:p-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold">Welcome back</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Enter your credentials to access LexiPH
-        </p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-center gap-1 mb-4">
+          <div className="flex-shrink-0">
+            <Image 
+              src="/logo/LOGO-0.5-woBG.svg" 
+              alt="LexiPH Logo" 
+              width={120}
+              height={120}
+              priority
+            />
+          </div>
+          <div className="flex flex-col items-start">
+            <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-iris-500 via-purple-600 to-iris-700 animate-gradient bg-clip-text text-transparent">
+              LexInSight
+            </h1>
+            <p className="text-sm sm:text-base font-medium bg-linear-to-r from-iris-400 via-purple-500 to-iris-600 animate-gradient bg-clip-text text-transparent">
+              AI compliance assistant
+            </p>
+          </div>
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold">Welcome back</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
+            Enter your credentials to access your account
+          </p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -48,7 +70,7 @@ export function LoginForm() {
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="Please enter your email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
@@ -64,7 +86,7 @@ export function LoginForm() {
           <Input
             id="password"
             type="password"
-            placeholder="••••••••"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}

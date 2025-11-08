@@ -54,16 +54,16 @@ export function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              'truncate text-sm font-medium leading-snug',
-              isActive ? 'text-slate-900' : 'text-slate-700'
+              'font-body truncate text-sm font-semibold leading-snug',
+              isActive ? 'text-neutral-900' : 'text-neutral-800'
             )}
             title={chat.title}
           >
             {chat.title}
           </p>
           <p className={cn(
-            'mt-1 text-xs transition-colors duration-150',
-            isActive ? 'text-slate-600' : 'text-slate-500'
+            'mt-1 font-body text-xs font-medium transition-colors duration-150',
+            isActive ? 'text-neutral-600' : 'text-neutral-500'
           )}>
             {formatTimestamp(chat.updated_at)}
           </p>
