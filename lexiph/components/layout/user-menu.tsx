@@ -29,12 +29,12 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center">
+        <button className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center">
           <Avatar className="size-9 sm:size-10 cursor-pointer">
             {user.avatar_url && (
               <AvatarImage src={user.avatar_url} alt={user.email} />
             )}
-            <AvatarFallback className="bg-blue-500 text-white font-medium text-sm sm:text-base">
+            <AvatarFallback className="bg-primary text-primary-foreground font-medium text-sm sm:text-base">
               {avatarFallback}
             </AvatarFallback>
           </Avatar>

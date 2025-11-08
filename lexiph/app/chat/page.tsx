@@ -124,11 +124,10 @@ export default function ChatPage() {
       {/* Main Content Area */}
       <main
         className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
-          // Add left margin for app sidebar on desktop
-          !isMobile && 'ml-16',
-          // Add left margin for chat sidebar on desktop when open
-          isOpen && !isMobile && 'ml-[calc(16rem+280px)]'
+          'flex flex-1 flex-col transition-all duration-300 bg-slate-50',
+          // Desktop: Add left margin for app sidebar (64px) + chat sidebar (280px) when open
+          !isMobile && !isOpen && 'ml-16',
+          !isMobile && isOpen && 'ml-[344px]'
         )}
       >
         {/* Mobile Menu Button - visible only on mobile */}
