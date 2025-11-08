@@ -64,7 +64,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-screen w-16 flex-col items-center bg-slate-900 py-4">
+    <aside className="fixed left-0 top-0 z-50 flex h-screen w-16 flex-col items-center bg-white dark:bg-neutral-900 border-r border-neutral-300 dark:border-neutral-700 py-4">
       {/* Top Navigation Items */}
       <nav className="flex flex-1 flex-col items-center gap-2">
         {navItems.map((item, index) => {
@@ -79,11 +79,11 @@ export function AppSidebar() {
               size="icon"
               className={cn(
                 'h-12 w-12 rounded-xl transition-all duration-200',
-                'hover:bg-slate-800 hover:text-white',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
+                'hover:bg-iris-50 hover:text-iris-700 dark:hover:bg-neutral-700 dark:hover:text-iris-300',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2',
                 active
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400'
+                  ? 'bg-iris-100 text-iris-900 dark:bg-neutral-700 dark:text-iris-300'
+                  : 'text-neutral-600 dark:text-neutral-400'
               )}
               aria-label={item.label}
               title={item.label}
@@ -102,8 +102,8 @@ export function AppSidebar() {
           size="icon"
           className={cn(
             'h-12 w-12 rounded-xl transition-all duration-200',
-            'text-slate-400 hover:bg-slate-800 hover:text-white',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'
+            'text-neutral-600 hover:bg-iris-50 hover:text-iris-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-iris-300',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2'
           )}
           aria-label="Upgrade"
           title="Upgrade"
@@ -118,20 +118,20 @@ export function AppSidebar() {
           size="icon"
           className={cn(
             'h-12 w-12 rounded-full transition-all duration-200',
-            'hover:ring-2 hover:ring-slate-400',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900'
+            'hover:ring-2 hover:ring-iris-400',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2'
           )}
           aria-label="Profile"
           title="Profile"
         >
-          {user?.user_metadata?.avatar_url ? (
+          {(user as any)?.user_metadata?.avatar_url ? (
             <img
-              src={user.user_metadata.avatar_url}
+              src={(user as any).user_metadata.avatar_url}
               alt="Profile"
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-iris-500 to-iris-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-iris-500 to-iris-700">
               <User className="h-5 w-5 text-white" />
             </div>
           )}
