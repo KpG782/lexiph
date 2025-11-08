@@ -136,14 +136,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           title: title || 'New Chat',
           user_id: user.id,
           mode: 'general'
-        })
+        } as any)
         .select()
         .single()
       
       if (error) throw error
       
       const chatWithCount: Chat = {
-        ...newChat,
+        ...(newChat as any),
         message_count: 0
       }
       
@@ -203,7 +203,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       const supabase = createClient()
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('chats')
         .update({ title })
         .eq('id', id)
@@ -236,7 +236,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     try {
       const supabase = createClient()
       
-      const { data: newMessage, error } = await supabase
+      const { data: newMessage, error } = await (supabase as any)
         .from('messages')
         .insert({
           chat_id: chatId,
@@ -250,7 +250,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       if (error) throw error
       
       // Update chat's updated_at timestamp
-      await supabase
+      await (supabase as any)
         .from('chats')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', chatId)

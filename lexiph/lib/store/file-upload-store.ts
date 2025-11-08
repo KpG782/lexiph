@@ -1,28 +1,34 @@
 'use client'
 
 import { create } from 'zustand'
+import { createClient } from '@/lib/supabase/client'
 
 interface UploadedFile {
   id: string
   file: File
   uploadedAt: string
+  storagePath?: string
+  status?: 'pending' | 'uploading' | 'uploaded' | 'error'
 }
 
 interface FileUploadStore {
   // State
   uploadedFiles: UploadedFile[]
   maxFiles: number
+  uploading: boolean
   
   // Actions
   addFiles: (files: File[]) => void
   removeFile: (id: string) => void
   clearFiles: () => void
   canAddMore: () => boolean
+  uploadToSupabase: (userId: string, chatId?: string) => Promise<void>
 }
 
 export const useFileUploadStore = create<FileUploadStore>((set, get) => ({
   uploadedFiles: [],
   maxFiles: 3,
+  uploading: false,
 
   addFiles: (files: File[]) => {
     const currentFiles = get().uploadedFiles
@@ -34,9 +40,10 @@ export const useFileUploadStore = create<FileUploadStore>((set, get) => ({
     }
 
     const filesToAdd = files.slice(0, availableSlots).map(file => ({
-      id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       file,
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
+      status: 'pending' as const
     }))
 
     set(state => ({
@@ -58,5 +65,83 @@ export const useFileUploadStore = create<FileUploadStore>((set, get) => ({
     const currentFiles = get().uploadedFiles
     const maxFiles = get().maxFiles
     return currentFiles.length < maxFiles
+  },
+
+  uploadToSupabase: async (userId: string, chatId?: string) => {
+    const files = get().uploadedFiles
+    if (files.length === 0) return
+
+    set({ uploading: true })
+
+    try {
+      const supabase = createClient()
+
+      for (const uploadedFile of files) {
+        // Update status to uploading
+        set(state => ({
+          uploadedFiles: state.uploadedFiles.map(f =>
+            f.id === uploadedFile.id ? { ...f, status: 'uploading' as const } : f
+          )
+        }))
+
+        // Upload to Supabase Storage
+        const fileExt = uploadedFile.file.name.split('.').pop()
+        const fileName = `${uploadedFile.id}.${fileExt}`
+        const filePath = `${userId}/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, uploadedFile.file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          set(state => ({
+            uploadedFiles: state.uploadedFiles.map(f =>
+              f.id === uploadedFile.id ? { ...f, status: 'error' as const } : f
+            )
+          }))
+          continue
+        }
+
+        // Save document metadata to database
+        const { error: dbError } = await (supabase as any)
+          .from('documents')
+          .insert({
+            user_id: userId,
+            chat_id: chatId,
+            file_name: uploadedFile.file.name,
+            file_size: uploadedFile.file.size,
+            file_type: uploadedFile.file.type,
+            storage_path: filePath,
+            status: 'completed'
+          })
+
+        if (dbError) {
+          console.error('Database error:', dbError)
+          set(state => ({
+            uploadedFiles: state.uploadedFiles.map(f =>
+              f.id === uploadedFile.id ? { ...f, status: 'error' as const } : f
+            )
+          }))
+          continue
+        }
+
+        // Update status to uploaded
+        set(state => ({
+          uploadedFiles: state.uploadedFiles.map(f =>
+            f.id === uploadedFile.id 
+              ? { ...f, status: 'uploaded' as const, storagePath: filePath } 
+              : f
+          )
+        }))
+      }
+    } catch (error) {
+      console.error('Upload failed:', error)
+    } finally {
+      set({ uploading: false })
+    }
   }
 }))

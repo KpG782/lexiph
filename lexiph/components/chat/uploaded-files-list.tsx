@@ -15,11 +15,22 @@ export function UploadedFilesList() {
   }
 
   const getFileIcon = (fileName: string) => {
-    if (fileName.endsWith('.pdf')) return '📄'
-    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return '📝'
-    if (fileName.endsWith('.md')) return '📋'
-    if (fileName.endsWith('.txt')) return '📃'
+    const lower = fileName.toLowerCase()
+    if (lower.endsWith('.pdf')) return '📄'
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) return '📝'
+    if (lower.endsWith('.md')) return '📋'
+    if (lower.endsWith('.txt')) return '📃'
     return '📁'
+  }
+
+  const getFileType = (fileName: string) => {
+    const lower = fileName.toLowerCase()
+    if (lower.endsWith('.pdf')) return 'PDF'
+    if (lower.endsWith('.docx')) return 'Word'
+    if (lower.endsWith('.doc')) return 'Word'
+    if (lower.endsWith('.md')) return 'MD'
+    if (lower.endsWith('.txt')) return 'TXT'
+    return 'File'
   }
 
   const handleRemove = (id: string, fileName: string) => {
@@ -31,48 +42,56 @@ export function UploadedFilesList() {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-slate-600">
-          Ready to analyze ({uploadedFiles.length}/{maxFiles})
-        </h3>
-        <p className="text-xs text-slate-500">
-          Click send to analyze documents
-        </p>
+      {/* Compliance Mode Indicator */}
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-iris-50 border border-iris-200 rounded-lg">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-iris-600 animate-pulse" />
+          <span className="text-xs font-medium text-iris-900">Compliance Mode</span>
+        </div>
+        <span className="text-xs text-iris-700">
+          {uploadedFiles.length}/{maxFiles} documents ready
+        </span>
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      {/* Compact Single Row Files */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <AnimatePresence>
           {uploadedFiles.map((uploadedFile) => (
             <motion.div
               key={uploadedFile.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm hover:border-iris-300 hover:shadow-md transition-all flex-shrink-0"
             >
               {/* File Icon */}
-              <div className="flex-shrink-0 text-lg">
+              <div className="flex-shrink-0 text-base">
                 {getFileIcon(uploadedFile.file.name)}
               </div>
 
-              {/* File Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-900 truncate max-w-[150px]">
+              {/* File Info - Compact */}
+              <div className="flex flex-col min-w-0">
+                <p className="text-xs font-medium text-slate-900 truncate max-w-[120px]">
                   {uploadedFile.file.name}
                 </p>
-                <p className="text-xs text-slate-500">
-                  {formatFileSize(uploadedFile.file.size)}
-                </p>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-semibold text-iris-600 bg-iris-50 px-1 py-0.5 rounded">
+                    {getFileType(uploadedFile.file.name)}
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    {formatFileSize(uploadedFile.file.size)}
+                  </span>
+                </div>
               </div>
 
-              {/* Remove Button */}
+              {/* Remove Button - Smaller */}
               <button
                 onClick={() => handleRemove(uploadedFile.id, uploadedFile.file.name)}
-                className="flex-shrink-0 rounded-full p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                className="flex-shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                 aria-label={`Remove ${uploadedFile.file.name}`}
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3" />
               </button>
             </motion.div>
           ))}

@@ -3,6 +3,10 @@
 import { useState, useRef } from 'react'
 import { Send, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useChatModeStore } from '@/lib/store/chat-mode-store'
+import { useFileUploadStore } from '@/lib/store/file-upload-store'
+import { useAuthStore } from '@/lib/store/auth-store'
+import { useChatStore } from '@/lib/store/chat-store'
 
 interface CenteredInputProps {
   onSend: (message: string) => void
@@ -19,16 +23,48 @@ export function CenteredInput({
 }: CenteredInputProps) {
   const [message, setMessage] = useState('')
   const [isFocused, setIsFocused] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { mode } = useChatModeStore()
+  const { uploadedFiles, clearFiles, uploadToSupabase, uploading } = useFileUploadStore()
+  const { user } = useAuthStore()
+  const { activeChat, createChat } = useChatStore()
 
-  const handleSend = () => {
-    if (!message.trim() || disabled) return
-    onSend(message.trim())
-    setMessage('')
+  const handleSend = async () => {
+    if ((!message.trim() && uploadedFiles.length === 0) || disabled || isSending) return
     
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
+    setIsSending(true)
+    
+    try {
+      // Create chat if none exists
+      let chatId = activeChat?.id
+      if (!chatId) {
+        const newChat = await createChat(message.trim() || 'New Conversation')
+        chatId = newChat.id
+      }
+
+      // Upload files to Supabase if in compliance mode
+      if (mode === 'compliance' && uploadedFiles.length > 0 && user) {
+        await uploadToSupabase(user.id, chatId)
+      }
+
+      // Send message
+      onSend(message.trim())
+      setMessage('')
+      
+      // Clear files after sending
+      if (uploadedFiles.length > 0) {
+        clearFiles()
+      }
+      
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+    } finally {
+      setIsSending(false)
     }
   }
 
@@ -84,11 +120,11 @@ export function CenteredInput({
 
           <button
             onClick={handleSend}
-            disabled={!message.trim() || disabled}
+            disabled={(!message.trim() && uploadedFiles.length === 0) || disabled || isSending || uploading}
             className="flex-shrink-0 rounded-lg bg-iris-600 p-2.5 text-white transition-all duration-200 hover:bg-iris-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-iris-600"
             aria-label="Send message"
           >
-            {disabled ? (
+            {(disabled || isSending || uploading) ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <Send className="h-5 w-5" />

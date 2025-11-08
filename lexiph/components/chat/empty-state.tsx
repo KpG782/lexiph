@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '@/lib/store/auth-store'
+import { useChatModeStore } from '@/lib/store/chat-mode-store'
+import { useFileUploadStore } from '@/lib/store/file-upload-store'
+import { UploadedFilesList } from './uploaded-files-list'
 
 interface EmptyStateProps {
   onPromptSelect: (prompt: string) => void
@@ -10,6 +13,8 @@ interface EmptyStateProps {
 
 export function EmptyState({ onPromptSelect }: EmptyStateProps) {
   const { user } = useAuthStore()
+  const { mode } = useChatModeStore()
+  const { uploadedFiles } = useFileUploadStore()
   const [greeting, setGreeting] = useState('')
 
   useEffect(() => {
@@ -21,12 +26,19 @@ export function EmptyState({ onPromptSelect }: EmptyStateProps) {
 
   const userName = user?.full_name?.split(' ')[0] || 'there'
 
-  const suggestedPrompts = [
-    'What are the key requirements for RA 10173 Data Privacy Act?',
-    'Help me review my disaster preparedness plan',
-    'What permits do I need for construction in Metro Manila?',
-    'Explain RA 9003 Solid Waste Management Act'
-  ]
+  const suggestedPrompts = mode === 'compliance' 
+    ? [
+        'Analyze my document for RA 10173 Data Privacy compliance',
+        'Check compliance with RA 10121 Disaster Risk Reduction',
+        'Review against RA 9003 Waste Management requirements',
+        'Verify compliance with Labor Code provisions'
+      ]
+    : [
+        'What are the key requirements for RA 10173 Data Privacy Act?',
+        'Help me review my disaster preparedness plan',
+        'What permits do I need for construction in Metro Manila?',
+        'Explain RA 9003 Solid Waste Management Act'
+      ]
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 space-y-8 text-center">
@@ -52,9 +64,22 @@ export function EmptyState({ onPromptSelect }: EmptyStateProps) {
           transition={{ delay: 0.2 }}
           className="text-sm sm:text-base text-slate-500"
         >
-          Your AI assistant for Philippine legal compliance
+          {mode === 'compliance' 
+            ? 'Upload documents for compliance analysis'
+            : 'Your AI assistant for Philippine legal compliance'}
         </motion.p>
       </motion.div>
+
+      {/* Show uploaded files in compliance mode */}
+      {mode === 'compliance' && uploadedFiles.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <UploadedFilesList />
+        </motion.div>
+      )}
 
       {/* Minimal Suggested Prompts */}
       <motion.div
