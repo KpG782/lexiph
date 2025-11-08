@@ -267,15 +267,18 @@ export function ChatInput() {
             <button
               onClick={handleDeepSearch}
               disabled={!message.trim() || isDeepSearching || isSending || loading}
-              className="rounded-lg bg-gradient-to-r from-iris-500 to-purple-500 p-2 text-white transition-all hover:from-iris-600 hover:to-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="relative rounded-lg bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-2 text-white shadow-lg shadow-purple-500/50 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:scale-100 min-h-[40px] min-w-[40px] flex items-center justify-center group"
               aria-label={isDeepSearching ? 'Performing deep search...' : 'Perform deep search'}
               type="button"
               title="Deep Search - Enhanced analysis with cross-references"
             >
+              {/* Animated glow effect */}
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-200" />
+              
               {isDeepSearching ? (
-                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                <Loader2 className="h-5 w-5 animate-spin relative z-10" aria-hidden="true" />
               ) : (
-                <Sparkles className="h-5 w-5" aria-hidden="true" />
+                <Sparkles className="h-5 w-5 relative z-10 group-hover:animate-pulse" aria-hidden="true" />
               )}
               <span className="sr-only">{isDeepSearching ? 'Searching...' : 'Deep Search'}</span>
             </button>

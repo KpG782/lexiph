@@ -6,7 +6,7 @@ import { ChatMessages } from './chat-messages'
 import { ChatInput } from './chat-input'
 import { ComplianceCanvas } from './compliance-canvas'
 import { RAGProgress } from './rag-progress'
-import { TypingIndicator } from './loading-indicator'
+import { TypingIndicator, EnhancedLoading } from './loading-indicator'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
@@ -507,9 +507,9 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
             
             <ChatMessages messages={messages} />
             
-            {/* Typing Indicator */}
+            {/* Enhanced Typing Indicator */}
             {(loading || isProcessing) && (
-              <div className="mt-4 flex justify-start">
+              <div className="mt-4 flex justify-start px-4">
                 <TypingIndicator />
               </div>
             )}

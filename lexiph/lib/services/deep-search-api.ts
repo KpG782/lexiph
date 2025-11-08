@@ -29,6 +29,13 @@ export interface DeepSearchResponse {
   cross_references: string[]
   documents_searched: number
   processing_time: number
+  deep_search_used?: boolean
+  processing_stages?: {
+    query_generator: string
+    search_executor: string
+    deep_search_orchestrator: string
+    summarizer: string
+  }
 }
 
 export interface DeepSearchError {
@@ -36,34 +43,155 @@ export interface DeepSearchError {
 }
 
 /**
- * Perform deep search analysis
- * This is a placeholder that will be connected to the actual API
+ * Perform deep search analysis using RAG API with PDF extraction
+ * Processing time: 60-120 seconds (includes PDF download and full-text extraction)
+ * 
+ * This uses the RAG API's deep search mode which:
+ * 1. Performs initial database search
+ * 2. Downloads and extracts full text from legislative PDFs
+ * 3. Performs semantic search on extracted content
+ * 4. Merges and reranks all results
+ * 5. Generates enhanced summary with citations
  */
 export async function performDeepSearch(params: DeepSearchRequest): Promise<DeepSearchResponse> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minutes timeout
+  const timeoutId = setTimeout(() => controller.abort(), 180000) // 3 minutes timeout
 
   try {
-    // TODO: Replace with actual API endpoint when available
-    // const response = await fetch(`${DEEP_SEARCH_API_URL}/api/research/deep-search`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(params),
-    //   signal: controller.signal,
-    // })
-
-    // PLACEHOLDER: Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 3000)) // Simulate 3 second processing
+    console.log('🔍 Starting deep search with PDF extraction...')
+    
+    // Call RAG API with use_deep_search flag enabled
+    const response = await fetch(`${DEEP_SEARCH_API_URL}/api/research/rag-summary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query,
+        user_id: params.user_id || 'deep-search-user',
+        use_deep_search: true, // Enable PDF extraction and full-text search
+      }),
+      signal: controller.signal,
+    })
 
     clearTimeout(timeoutId)
 
-    // PLACEHOLDER: Return mock data
-    const mockResponse: DeepSearchResponse = {
-      status: 'completed',
-      query: params.query,
-      enhanced_summary: generateMockDeepSearchSummary(params.query, params.document_name),
+    if (!response.ok) {
+      const errorData: DeepSearchError = await response.json()
+      throw new Error(`Deep Search API Error ${response.status}: ${errorData.detail}`)
+    }
+
+    const data = await response.json()
+    console.log('✓ Deep search completed:', data.deep_search_used ? 'with PDF extraction' : 'database only')
+
+    // Transform RAG API response to DeepSearchResponse format
+    const deepSearchResponse: DeepSearchResponse = {
+      status: data.status,
+      query: data.query,
+      enhanced_summary: data.summary,
+      related_documents: extractRelatedDocuments(data.summary),
+      additional_insights: extractInsights(data.summary),
+      cross_references: extractCrossReferences(data.summary),
+      documents_searched: data.documents_found || 0,
+      processing_time: data.processing_time_seconds || 0,
+      deep_search_used: data.deep_search_used,
+      processing_stages: data.processing_stages,
+    }
+
+    return deepSearchResponse
+
+  } catch (error) {
+    clearTimeout(timeoutId)
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Deep search timed out after 3 minutes. The query may be complex or PDFs are large.')
+      }
+      throw error
+    }
+    
+    throw new Error('Unknown error occurred during deep search')
+  }
+}
+
+// Helper: Extract related documents from summary
+function extractRelatedDocuments(summary: string): Array<{
+  title: string
+  relevance_score: number
+  excerpt: string
+  reference: string
+}> {
+  const docs: Array<{title: string; relevance_score: number; excerpt: string; reference: string}> = []
+  
+  // Extract RA references
+  const raPattern = /(?:RA|Republic Act)\s+(?:No\.\s+)?(\d+)/gi
+  const matches = summary.match(raPattern)
+  
+  if (matches) {
+    const uniqueRAs = [...new Set(matches)]
+    uniqueRAs.slice(0, 5).forEach((ra, index) => {
+      docs.push({
+        title: ra,
+        relevance_score: 0.95 - (index * 0.05),
+        excerpt: `Referenced in deep search analysis with full-text extraction`,
+        reference: ra
+      })
+    })
+  }
+  
+  return docs
+}
+
+// Helper: Extract insights from summary
+function extractInsights(summary: string): string[] {
+  const insights: string[] = []
+  const lines = summary.split('\n')
+  
+  lines.forEach(line => {
+    if (line.trim().startsWith('-') || line.trim().startsWith('•') || /^\d+\./.test(line.trim())) {
+      const insight = line.trim().replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '')
+      if (insight.length > 20 && insight.length < 200) {
+        insights.push(insight)
+      }
+    }
+  })
+  
+  return insights.slice(0, 8)
+}
+
+// Helper: Extract cross-references from summary
+function extractCrossReferences(summary: string): string[] {
+  const refs: string[] = []
+  
+  // Extract various reference patterns
+  const patterns = [
+    /(?:RA|Republic Act)\s+(?:No\.\s+)?(\d+)/gi,
+    /NDRRMC\s+(?:Memorandum\s+)?Circular\s+No\.\s+\d+/gi,
+    /Executive Order\s+No\.\s+\d+/gi,
+    /Presidential Decree\s+No\.\s+\d+/gi,
+  ]
+  
+  patterns.forEach(pattern => {
+    const matches = summary.match(pattern)
+    if (matches) {
+      refs.push(...[...new Set(matches)])
+    }
+  })
+  
+  return [...new Set(refs)].slice(0, 10)
+}
+
+/**
+ * FALLBACK: Mock deep search for development/testing
+ * Use this when RAG API is not available
+ */
+export async function performDeepSearchMock(params: DeepSearchRequest): Promise<DeepSearchResponse> {
+  await new Promise(resolve => setTimeout(resolve, 3000))
+  
+  const mockResponse: DeepSearchResponse = {
+    status: 'completed',
+    query: params.query,
+    enhanced_summary: generateMockDeepSearchSummary(params.query, params.document_name),
       related_documents: [
         {
           title: 'Republic Act No. 10121 - DRRM Act',
