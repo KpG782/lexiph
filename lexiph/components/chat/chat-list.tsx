@@ -1,15 +1,17 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChatStore } from '@/lib/store/chat-store'
 import { useSidebarStore } from '@/lib/store/sidebar-store'
 import { ChatListItem } from './chat-list-item'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Search, X } from 'lucide-react'
 
 export function ChatList() {
   const router = useRouter()
   const { chats, activeChat, selectChat } = useChatStore()
   const { isMobile, close } = useSidebarStore()
+  const [searchQuery, setSearchQuery] = useState('')
   
   const handleSelectChat = (id: string) => {
     // Update active chat in store
@@ -23,6 +25,22 @@ export function ChatList() {
       close()
     }
   }
+
+  // Filter chats based on search query
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return chats
+    
+    const query = searchQuery.toLowerCase()
+    return chats.filter(chat => 
+      chat.title.toLowerCase().includes(query) ||
+      chat.last_message_preview?.toLowerCase().includes(query)
+    )
+  }, [chats, searchQuery])
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
+  }
+  
   // Empty state when no chats exist
   if (chats.length === 0) {
     return (
@@ -37,20 +55,57 @@ export function ChatList() {
   }
 
   return (
-    <div
-      className="flex-1 overflow-y-auto px-3 py-2"
-      role="list"
-      aria-label="Chat conversations"
-    >
-      <div className="space-y-1">
-        {chats.map((chat) => (
-          <ChatListItem
-            key={chat.id}
-            chat={chat}
-            isActive={chat.id === activeChat?.id}
-            onClick={() => handleSelectChat(chat.id)}
+    <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Search Bar */}
+      <div className="px-3 py-2 border-b border-slate-200">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search chats..."
+            className="w-full pl-9 pr-9 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-iris-500 focus:border-transparent transition-all"
+            aria-label="Search chats"
           />
-        ))}
+          {searchQuery && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Chat List */}
+      <div
+        className="flex-1 overflow-y-auto px-3 py-2"
+        role="list"
+        aria-label="Chat conversations"
+      >
+        {filteredChats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+            <Search className="mb-3 h-10 w-10 text-slate-300" />
+            <p className="text-sm font-medium text-slate-600">No chats found</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Try a different search term
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {filteredChats.map((chat) => (
+              <ChatListItem
+                key={chat.id}
+                chat={chat}
+                isActive={chat.id === activeChat?.id}
+                onClick={() => handleSelectChat(chat.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

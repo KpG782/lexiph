@@ -35,7 +35,7 @@ export async function simpleRAG(query: string, userId?: string): Promise<RAGResp
       },
       body: JSON.stringify({
         query,
-        user_id: userId || 'lexiph-user',
+        user_id: userId || 'LexInSight-user',
       }),
     })
 

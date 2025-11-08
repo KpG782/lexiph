@@ -1,8 +1,8 @@
-# LexiPH Color System - Blue Iris Palette
+# LexInSight Color System - Blue Iris Palette
 
 ## Overview
 
-The LexiPH application uses a custom Blue Iris color palette as the primary brand color, ensuring WCAG 2.1 AA compliance for accessibility.
+The LexInSight application uses a custom Blue Iris color palette as the primary brand color, ensuring WCAG 2.1 AA compliance for accessibility.
 
 ## Blue Iris Palette
 

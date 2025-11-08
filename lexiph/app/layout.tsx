@@ -20,7 +20,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "LexiPH - Philippine Legal Compliance Assistant",
+  title: "LexInsights - Philippine Legal Compliance Assistant",
   description: "Your AI-powered Philippine legal compliance assistant",
 };
 

@@ -1,6 +1,6 @@
 # Accessibility Implementation - WCAG 2.1 AA Compliance
 
-This document outlines the accessibility features implemented in the LexiPH application to ensure WCAG 2.1 Level AA compliance.
+This document outlines the accessibility features implemented in the LexInSight application to ensure WCAG 2.1 Level AA compliance.
 
 ## Overview
 

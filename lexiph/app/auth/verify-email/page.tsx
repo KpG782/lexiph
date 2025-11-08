@@ -80,7 +80,7 @@ function VerifyEmailContent() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-left space-y-2">
             <p className="font-medium text-blue-900">Next steps:</p>
             <ol className="list-decimal list-inside space-y-1 text-blue-800">
-              <li>Open the email from LexiPH</li>
+              <li>Open the email from LexInSight</li>
               <li>Click the verification link</li>
               <li>You'll be redirected to the chat page</li>
             </ol>

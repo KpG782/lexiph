@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Send, Paperclip, X } from 'lucide-react'
+import { Send, Paperclip, X, Loader2 } from 'lucide-react'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
@@ -40,34 +40,39 @@ export function ChatInput() {
 
     setIsSending(true)
     
-    // Route to appropriate API based on mode
-    if (mode === 'general') {
-      // General chat API call (sample)
-      console.log('Calling general chat API with message:', message)
-      await new Promise(resolve => setTimeout(resolve, 500))
-    } else {
-      // Compliance mode - use RAG API or file processing
-      if (uploadedFile) {
-        console.log('Processing compliance file:', uploadedFile.name)
-        // Trigger canvas display with mock compliance report
-        // This will be handled by ChatContainer listening for file uploads
-        const event = new CustomEvent('file-uploaded', { 
-          detail: { 
-            file: uploadedFile,
-            query: message.trim() || 'Analyze this document for compliance'
-          } 
-        })
-        window.dispatchEvent(event)
-      } else if (message.trim()) {
-        // Text-only query - use RAG API
-        await submitQuery(message.trim(), user?.id)
+    try {
+      // Route to appropriate API based on mode
+      if (mode === 'general') {
+        // General chat API call (sample)
+        console.log('Calling general chat API with message:', message)
+        await new Promise(resolve => setTimeout(resolve, 500))
+      } else {
+        // Compliance mode - use RAG API or file processing
+        if (uploadedFile) {
+          console.log('Processing compliance file:', uploadedFile.name)
+          // Trigger canvas display with mock compliance report
+          // This will be handled by ChatContainer listening for file uploads
+          const event = new CustomEvent('file-uploaded', { 
+            detail: { 
+              file: uploadedFile,
+              query: message.trim() || 'Analyze this document for compliance'
+            } 
+          })
+          window.dispatchEvent(event)
+        } else if (message.trim()) {
+          // Text-only query - use RAG API
+          await submitQuery(message.trim(), user?.id)
+        }
       }
+      
+      // Clear textarea and file after send
+      setMessage('')
+      setUploadedFile(null)
+    } catch (error) {
+      console.error('Error sending message:', error)
+    } finally {
+      setIsSending(false)
     }
-    
-    // Clear textarea and file after send
-    setMessage('')
-    setUploadedFile(null)
-    setIsSending(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -202,7 +207,11 @@ export function ChatInput() {
             aria-label={isSending || loading ? 'Sending message...' : 'Send message'}
             type="submit"
           >
-            <Send className="h-5 w-5" aria-hidden="true" />
+            {isSending || loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            ) : (
+              <Send className="h-5 w-5" aria-hidden="true" />
+            )}
             <span className="sr-only">{isSending || loading ? 'Sending...' : 'Send'}</span>
           </button>
         </div>

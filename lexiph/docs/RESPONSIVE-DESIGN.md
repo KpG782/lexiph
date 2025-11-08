@@ -1,8 +1,8 @@
-# Responsive Design Best Practices - LexiPH
+# Responsive Design Best Practices - LexInSight
 
 ## Overview
 
-LexiPH follows mobile-first responsive design principles to ensure optimal user experience across all devices.
+LexInSight follows mobile-first responsive design principles to ensure optimal user experience across all devices.
 
 ## Breakpoints
 

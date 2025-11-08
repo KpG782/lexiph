@@ -6,7 +6,7 @@
 ### Layout Structure
 ```
 ┌─────────────────────────────────────┐
-│ Header: [LexiPH Logo] [User Avatar] │
+│ Header: [LexInSight Logo] [User Avatar] │
 ├─────────────────────────────────────┤
 │                                     │
 │  Chat Messages Area                 │
