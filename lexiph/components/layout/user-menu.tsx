@@ -49,7 +49,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="cursor-pointer text-red-600 focus:text-red-600 min-h-[44px] text-sm sm:text-base"
+          className="cursor-pointer text-red-600 focus:text-red-600 min-h-[44px] text-sm sm:text-base gover:bg-red/50"
         >
           Sign Out
         </DropdownMenuItem>
