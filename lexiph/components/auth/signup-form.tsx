@@ -51,7 +51,8 @@ export function SignupForm() {
     // Check if signup was successful (no error means success)
     const currentError = useAuthStore.getState().error
     if (!currentError) {
-      router.push('/chat')
+      // Redirect to email verification page with email in URL
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
     }
   }
 

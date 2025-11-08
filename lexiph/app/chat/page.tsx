@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/auth-store'
+import { supabase } from '@/lib/supabase/client'
 import { ChatContainer } from '@/components/chat/chat-container'
 import { Message } from '@/types'
 
@@ -19,16 +20,34 @@ const mockMessages: Message[] = [
 export default function ChatPage() {
   const router = useRouter()
   const { user, loading } = useAuthStore()
+  const [checkingVerification, setCheckingVerification] = useState(true)
 
-  // Redirect to login if not authenticated
+  // Check authentication and email verification
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
+    const checkAuth = async () => {
+      if (!loading && !user) {
+        router.push('/auth/login')
+        return
+      }
+
+      if (user) {
+        // Check if email is verified
+        const { data } = await supabase.auth.getUser()
+        
+        if (data.user && !data.user.email_confirmed_at) {
+          // Email not verified, redirect to verification page
+          router.push(`/auth/verify-email?email=${encodeURIComponent(user.email)}`)
+        } else {
+          setCheckingVerification(false)
+        }
+      }
     }
+
+    checkAuth()
   }, [user, loading, router])
 
-  // Show loading state while checking session
-  if (loading) {
+  // Show loading state while checking session or verification
+  if (loading || checkingVerification) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-slate-600">Loading...</div>
