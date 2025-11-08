@@ -192,63 +192,43 @@ export async function performDeepSearchMock(params: DeepSearchRequest): Promise<
     status: 'completed',
     query: params.query,
     enhanced_summary: generateMockDeepSearchSummary(params.query, params.document_name),
-      related_documents: [
-        {
-          title: 'Republic Act No. 10121 - DRRM Act',
-          relevance_score: 0.95,
-          excerpt: 'Comprehensive framework for disaster risk reduction and management...',
-          reference: 'RA 10121, Section 12'
-        },
-        {
-          title: 'NDRRMC Memorandum Circular No. 4',
-          relevance_score: 0.88,
-          excerpt: 'Guidelines on the establishment of Barangay DRRM Committees...',
-          reference: 'NDRRMC MC No. 4, Series of 2012'
-        },
-        {
-          title: 'Local Government Code - Disaster Management',
-          relevance_score: 0.82,
-          excerpt: 'Local government units shall ensure disaster preparedness...',
-          reference: 'RA 7160, Book II, Title V'
-        }
-      ],
-      additional_insights: [
-        'Cross-reference with PHIVOLCS hazard maps required',
-        'Consider integration with PAGASA early warning systems',
-        'Review recent NDRRMC guidelines on community-based DRRM',
-        'Align with National DRRM Framework 2020-2030'
-      ],
-      cross_references: [
-        'RA 10121 - Philippine Disaster Risk Reduction and Management Act',
-        'RA 7160 - Local Government Code',
-        'NDRRMC MC No. 4, Series of 2012',
-        'NDRRMC MC No. 5, Series of 2013'
-      ],
-      documents_searched: 156,
-      processing_time: 3.2
-    }
-
-    return mockResponse
-
-    // ACTUAL API CALL (uncomment when ready):
-    // if (!response.ok) {
-    //   const errorData: DeepSearchError = await response.json()
-    //   throw new Error(`API Error ${response.status}: ${errorData.detail}`)
-    // }
-    // return await response.json()
-
-  } catch (error) {
-    clearTimeout(timeoutId)
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Deep search timed out after 5 minutes. Please try again.')
+    related_documents: [
+      {
+        title: 'Republic Act No. 10121 - DRRM Act',
+        relevance_score: 0.95,
+        excerpt: 'Comprehensive framework for disaster risk reduction and management...',
+        reference: 'RA 10121, Section 12'
+      },
+      {
+        title: 'NDRRMC Memorandum Circular No. 4',
+        relevance_score: 0.88,
+        excerpt: 'Guidelines on the establishment of Barangay DRRM Committees...',
+        reference: 'NDRRMC MC No. 4, Series of 2012'
+      },
+      {
+        title: 'Local Government Code - Disaster Management',
+        relevance_score: 0.82,
+        excerpt: 'Local government units shall ensure disaster preparedness...',
+        reference: 'RA 7160, Book II, Title V'
       }
-      throw error
-    }
-    
-    throw new Error('Unknown error occurred during deep search')
+    ],
+    additional_insights: [
+      'Cross-reference with PHIVOLCS hazard maps required',
+      'Consider integration with PAGASA early warning systems',
+      'Review recent NDRRMC guidelines on community-based DRRM',
+      'Align with National DRRM Framework 2020-2030'
+    ],
+    cross_references: [
+      'RA 10121 - Philippine Disaster Risk Reduction and Management Act',
+      'RA 7160 - Local Government Code',
+      'NDRRMC MC No. 4, Series of 2012',
+      'NDRRMC MC No. 5, Series of 2013'
+    ],
+    documents_searched: 156,
+    processing_time: 3.2
   }
+
+  return mockResponse
 }
 
 /**
