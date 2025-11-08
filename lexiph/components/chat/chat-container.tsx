@@ -11,6 +11,7 @@ import { TypingIndicator, EnhancedLoading } from './loading-indicator'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
+import { useChatStore } from '@/lib/store/chat-store'
 import type { Message } from '@/types'
 import { AlertCircle, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -241,14 +242,24 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
     submitQuery, 
     clearError 
   } = useRAGStore()
+  const { activeChat, messages: chatMessages, fetchMessages, loadingMessages } = useChatStore()
   
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasContent, setCanvasContent] = useState('')
   const [canvasFileName, setCanvasFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [deepSearchResult, setDeepSearchResult] = useState<any>(null)
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [currentQuery, setCurrentQuery] = useState<string>('')
+
+  // Get messages for active chat
+  const messages = activeChat ? (chatMessages[activeChat.id] || []) : initialMessages
+
+  // Fetch messages when active chat changes
+  useEffect(() => {
+    if (activeChat && !chatMessages[activeChat.id]) {
+      fetchMessages(activeChat.id)
+    }
+  }, [activeChat, chatMessages, fetchMessages])
 
   // Show canvas when we have a RAG response in compliance mode
   useEffect(() => {
@@ -264,26 +275,12 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
   }, [mode, currentResponse])
 
   // Add RAG responses to messages in general mode
+  // Note: This is handled by the chat store now, but keeping for backward compatibility
   useEffect(() => {
-    if (currentResponse && mode === 'general') {
-      if (currentQuery) {
-        const userMessage: Message = {
-          id: `user-${Date.now()}`,
-          role: 'user',
-          content: currentQuery,
-          created_at: new Date().toISOString(),
-        }
-        
-        const assistantMessage: Message = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: currentResponse.summary,
-          created_at: new Date().toISOString(),
-        }
-        
-        setMessages(prev => [...prev, userMessage, assistantMessage])
-        setCurrentQuery('')
-      }
+    if (currentResponse && mode === 'general' && currentQuery) {
+      // Messages are now managed by the store
+      // This effect is kept for any additional UI updates needed
+      setCurrentQuery('')
     }
   }, [currentResponse, mode, currentQuery])
 
@@ -417,9 +414,10 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
         <div 
           className={`flex flex-col ${
             isComplianceWithCanvas ? 'w-full lg:w-[40%]' : 'w-full'
-          } transition-all duration-300`}
+          } transition-all duration-300 overflow-hidden`}
         >
-          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+          <div className="flex w-full flex-1 flex-col overflow-hidden">
+            <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 flex-shrink-0">
             {/* RAG Loading State */}
             <AnimatePresence>
               {loading && mode === 'compliance' && (
@@ -466,16 +464,30 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
               )}
             </AnimatePresence>
             
-            <ChatMessages messages={messages} />
+            {loadingMessages ? (
+              <div className="flex items-center justify-center py-12">
+                <EnhancedLoading stage="searching" />
+              </div>
+            ) : null}
+            </div>
             
-            {/* Enhanced Typing Indicator */}
-            <AnimatePresence>
-              {(loading || isProcessing) && (
-                <div className="mt-4 flex justify-start px-4">
-                  <TypingIndicator />
+            {/* Messages with scrollbar on far right */}
+            {!loadingMessages && (
+              <div className="flex-1 overflow-y-auto">
+                <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+                  <ChatMessages messages={messages} />
+                  
+                  {/* Enhanced Typing Indicator */}
+                  <AnimatePresence>
+                    {(loading || isProcessing) && (
+                      <div className="mt-4 flex justify-start">
+                        <TypingIndicator />
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </div>
           <ChatInput />
         </div>

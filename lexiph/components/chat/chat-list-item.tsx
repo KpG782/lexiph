@@ -98,19 +98,25 @@ export function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
       transition={{ duration: 0.2 }}
       className="relative group"
     >
-      <button
+      <div
         onClick={onClick}
-        disabled={isDeleting}
         className={cn(
-          'w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150',
+          'w-full rounded-lg px-3 py-2.5 text-left transition-all duration-150 cursor-pointer',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50',
           isActive 
             ? 'bg-slate-100 text-slate-900 hover:bg-slate-200 shadow-sm' 
             : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
-          isDeleting && 'opacity-50 cursor-not-allowed'
+          isDeleting && 'opacity-50 cursor-not-allowed pointer-events-none'
         )}
         aria-current={isActive ? 'page' : undefined}
-        role="listitem"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClick()
+          }
+        }}
       >
         <div className="flex items-start gap-3">
           <MessageSquare 
@@ -191,7 +197,7 @@ export function ChatListItem({ chat, isActive, onClick }: ChatListItemProps) {
             )}
           </AnimatePresence>
         </div>
-      </button>
+      </div>
     </motion.div>
   )
 }

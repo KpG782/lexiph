@@ -2,19 +2,24 @@
 
 import { create } from 'zustand'
 import { Chat, Message } from '@/types'
+import { getMessagesForChat, addMessage as addMessageToMock, deleteMessagesForChat } from '@/lib/mock-data/messages'
 
 interface ChatStore {
   // State
   chats: Chat[]
   activeChat: Chat | null
+  messages: Record<string, Message[]> // chatId -> messages
   loading: boolean
+  loadingMessages: boolean
   
   // Actions
   fetchChats: () => Promise<void>
+  fetchMessages: (chatId: string) => Promise<void>
   createChat: (title?: string) => Promise<Chat>
   selectChat: (id: string) => void
   deleteChat: (id: string) => Promise<void>
   updateChatTitle: (id: string, title: string) => Promise<void>
+  addMessage: (chatId: string, message: Omit<Message, 'id' | 'created_at'>) => Promise<void>
   addRAGMessage: (query: string, response: any) => void
 }
 
@@ -79,15 +84,17 @@ const mockChats: Chat[] = [
 export const useChatStore = create<ChatStore>((set, get) => ({
   chats: mockChats,
   activeChat: null,
+  messages: {},
   loading: false,
+  loadingMessages: false,
 
   fetchChats: async () => {
     set({ loading: true })
     
     try {
-      // For MVP, we're using mock data
-      // In production, this would fetch from Supabase
-      await new Promise(resolve => setTimeout(resolve, 300)) // Simulate API call
+      // MOCK: Using mock data
+      // SUPABASE: Replace with supabase.from('chats').select('*').order('updated_at', { ascending: false })
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       set({ 
         chats: mockChats,
@@ -96,6 +103,27 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch chats:', error)
       set({ loading: false })
+    }
+  },
+
+  fetchMessages: async (chatId: string) => {
+    set({ loadingMessages: true })
+    
+    try {
+      // MOCK: Using mock data
+      // SUPABASE: Replace with getMessagesForChat function that calls Supabase
+      const messages = await getMessagesForChat(chatId)
+      
+      set(state => ({
+        messages: {
+          ...state.messages,
+          [chatId]: messages
+        },
+        loadingMessages: false
+      }))
+    } catch (error) {
+      console.error('Failed to fetch messages:', error)
+      set({ loadingMessages: false })
     }
   },
 
@@ -110,13 +138,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
     
     try {
-      // For MVP, we're adding to local state
-      // In production, this would create in Supabase
-      await new Promise(resolve => setTimeout(resolve, 200)) // Simulate API call
+      // MOCK: Adding to local state
+      // SUPABASE: Replace with supabase.from('chats').insert(newChat).select().single()
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       set(state => ({ 
         chats: [newChat, ...state.chats],
-        activeChat: newChat
+        activeChat: newChat,
+        messages: {
+          ...state.messages,
+          [newChat.id]: []
+        }
       }))
       
       return newChat
@@ -135,17 +167,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   deleteChat: async (id: string) => {
     try {
-      // For MVP, we're removing from local state
-      // In production, this would delete from Supabase
-      await new Promise(resolve => setTimeout(resolve, 200)) // Simulate API call
+      // MOCK: Removing from local state and mock messages
+      // SUPABASE: Replace with supabase.from('chats').delete().eq('id', id)
+      // Note: Messages will cascade delete if foreign key is set up properly
+      await deleteMessagesForChat(id)
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       set(state => {
         const newChats = state.chats.filter(c => c.id !== id)
         const newActiveChat = state.activeChat?.id === id ? null : state.activeChat
+        const newMessages = { ...state.messages }
+        delete newMessages[id]
         
         return {
           chats: newChats,
-          activeChat: newActiveChat
+          activeChat: newActiveChat,
+          messages: newMessages
         }
       })
     } catch (error) {
@@ -156,9 +193,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   updateChatTitle: async (id: string, title: string) => {
     try {
-      // For MVP, we're updating local state
-      // In production, this would update in Supabase
-      await new Promise(resolve => setTimeout(resolve, 200)) // Simulate API call
+      // MOCK: Updating local state
+      // SUPABASE: Replace with supabase.from('chats').update({ title, updated_at: new Date().toISOString() }).eq('id', id)
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       set(state => {
         const updatedChats = state.chats.map(chat =>
@@ -178,6 +215,41 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       })
     } catch (error) {
       console.error('Failed to update chat title:', error)
+      throw error
+    }
+  },
+
+  addMessage: async (chatId: string, message: Omit<Message, 'id' | 'created_at'>) => {
+    try {
+      // MOCK: Adding to mock data
+      // SUPABASE: Replace with addMessageToMock function that calls Supabase
+      const newMessage = await addMessageToMock(chatId, message)
+      
+      set(state => {
+        const chatMessages = state.messages[chatId] || []
+        
+        // Update chat's last_message_preview and updated_at
+        const updatedChats = state.chats.map(chat =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                last_message_preview: message.content.substring(0, 100),
+                updated_at: new Date().toISOString(),
+                message_count: (chat.message_count || 0) + 1
+              }
+            : chat
+        )
+        
+        return {
+          messages: {
+            ...state.messages,
+            [chatId]: [...chatMessages, newMessage]
+          },
+          chats: updatedChats
+        }
+      })
+    } catch (error) {
+      console.error('Failed to add message:', error)
       throw error
     }
   },
