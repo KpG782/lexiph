@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Send, Paperclip, X, Loader2 } from 'lucide-react'
+import { Send, Paperclip, X, Loader2, Sparkles } from 'lucide-react'
 import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { ChatModeToggle } from './chat-mode-toggle'
+import { performDeepSearch } from '@/lib/services/deep-search-api'
 
 // Debounce utility
 function debounce<T extends (...args: any[]) => any>(
@@ -22,6 +23,7 @@ function debounce<T extends (...args: any[]) => any>(
 export function ChatInput() {
   const [message, setMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isDeepSearching, setIsDeepSearching] = useState(false)
   const { mode, uploadedFile, setUploadedFile } = useChatModeStore()
   const { submitQuery, loading } = useRAGStore()
   const { user } = useAuthStore()
@@ -41,11 +43,20 @@ export function ChatInput() {
     setIsSending(true)
     
     try {
-      // Route to appropriate API based on mode
+      // Both modes now use RAG API for text queries
       if (mode === 'general') {
-        // General chat API call (sample)
-        console.log('Calling general chat API with message:', message)
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // General mode - use RAG API for Philippine law questions
+        if (message.trim()) {
+          console.log('Calling RAG API with message:', message)
+          
+          // Dispatch event to notify container
+          const event = new CustomEvent('query-submitted', {
+            detail: { query: message.trim() }
+          })
+          window.dispatchEvent(event)
+          
+          await submitQuery(message.trim(), user?.id)
+        }
       } else {
         // Compliance mode - use RAG API or file processing
         if (uploadedFile) {
@@ -65,9 +76,12 @@ export function ChatInput() {
         }
       }
       
-      // Clear textarea and file after send
+      // Clear textarea after send
       setMessage('')
-      setUploadedFile(null)
+      // Only clear file in compliance mode
+      if (mode === 'compliance') {
+        setUploadedFile(null)
+      }
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
@@ -116,6 +130,54 @@ export function ChatInput() {
     setUploadedFile(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDeepSearch = async () => {
+    if (!message.trim() && !uploadedFile) {
+      alert('Please enter a query or upload a document first')
+      return
+    }
+
+    setIsDeepSearching(true)
+
+    try {
+      const query = message.trim() || 'Perform comprehensive analysis'
+      const context = uploadedFile ? `Analyzing file: ${uploadedFile.name}` : undefined
+
+      const result = await performDeepSearch({
+        query,
+        context,
+        document_name: uploadedFile?.name,
+        user_id: user?.id || 'chat-user',
+        max_results: 50
+      })
+
+      // Dispatch event with deep search results
+      const event = new CustomEvent('deep-search-complete', {
+        detail: {
+          query,
+          result,
+          file: uploadedFile
+        }
+      })
+      window.dispatchEvent(event)
+
+      // Show success message
+      const announcement = 'Deep search completed. Enhanced analysis available.'
+      const liveRegion = document.createElement('div')
+      liveRegion.setAttribute('role', 'status')
+      liveRegion.setAttribute('aria-live', 'polite')
+      liveRegion.className = 'sr-only'
+      liveRegion.textContent = announcement
+      document.body.appendChild(liveRegion)
+      setTimeout(() => document.body.removeChild(liveRegion), 1000)
+
+    } catch (error) {
+      console.error('Deep search failed:', error)
+      alert('Deep search failed. Please try again.')
+    } finally {
+      setIsDeepSearching(false)
     }
   }
 
@@ -200,6 +262,29 @@ export function ChatInput() {
             Press Enter to send, Shift+Enter for new line
           </span>
           
+          {/* Deep Search Button (General Mode Only) */}
+          {mode === 'general' && (
+            <button
+              onClick={handleDeepSearch}
+              disabled={!message.trim() || isDeepSearching || isSending || loading}
+              className="relative rounded-lg bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-2 text-white shadow-lg shadow-purple-500/50 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:scale-100 min-h-[40px] min-w-[40px] flex items-center justify-center group"
+              aria-label={isDeepSearching ? 'Performing deep search...' : 'Perform deep search'}
+              type="button"
+              title="Deep Search - Enhanced analysis with cross-references"
+            >
+              {/* Animated glow effect */}
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-200" />
+              
+              {isDeepSearching ? (
+                <Loader2 className="h-5 w-5 animate-spin relative z-10" aria-hidden="true" />
+              ) : (
+                <Sparkles className="h-5 w-5 relative z-10 group-hover:animate-pulse" aria-hidden="true" />
+              )}
+              <span className="sr-only">{isDeepSearching ? 'Searching...' : 'Deep Search'}</span>
+            </button>
+          )}
+          
+          {/* Send Button */}
           <button
             onClick={handleSend}
             disabled={(!message.trim() && !uploadedFile) || isSending || loading}

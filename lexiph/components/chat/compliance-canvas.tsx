@@ -9,6 +9,7 @@ import { AIDisclaimer, AIDisclaimerBadge } from './ai-disclaimer'
 import { cn } from '@/lib/utils'
 import { type RAGResponse } from '@/lib/services/rag-api'
 import { exportToDocx } from '@/lib/utils/docx-export'
+import { type DeepSearchResponse } from '@/lib/services/deep-search-api'
 
 interface ComplianceCanvasProps {
   content: string
@@ -16,9 +17,10 @@ interface ComplianceCanvasProps {
   ragResponse?: RAGResponse
   searchQueries?: string[]
   documentCount?: number
+  deepSearchResult?: DeepSearchResponse | null
 }
 
-export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries, documentCount }: ComplianceCanvasProps) {
+export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries, documentCount, deepSearchResult: externalDeepSearchResult }: ComplianceCanvasProps) {
   const { 
     isEditMode, 
     toggleEditMode, 
@@ -31,7 +33,17 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
   const [showHistory, setShowHistory] = useState(false)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [deepSearchResult, setDeepSearchResult] = useState<DeepSearchResponse | null>(externalDeepSearchResult || null)
+  const [showDeepSearch, setShowDeepSearch] = useState(false)
   const currentVersion = getCurrentVersion()
+
+  // Update deep search result when external prop changes
+  useEffect(() => {
+    if (externalDeepSearchResult) {
+      setDeepSearchResult(externalDeepSearchResult)
+      setShowDeepSearch(true)
+    }
+  }, [externalDeepSearchResult])
 
   // Initialize with current version or new content
   useEffect(() => {
@@ -476,6 +488,80 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
 
             {/* AI Disclaimer - Always show at top when content is ready */}
             {displayContent && <AIDisclaimer />}
+
+            {/* Deep Search Results */}
+            {showDeepSearch && deepSearchResult && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-iris-50 to-purple-50 border-2 border-iris-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 text-iris-600" aria-hidden="true" />
+                  <h3 className="font-display text-base font-semibold text-iris-900">
+                    Deep Search Results
+                  </h3>
+                  <span className="text-xs text-iris-600 bg-iris-100 px-2 py-0.5 rounded">
+                    {deepSearchResult.documents_searched} documents analyzed
+                  </span>
+                </div>
+
+                {/* Related Documents */}
+                {deepSearchResult.related_documents.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Related Documents:</h4>
+                    <div className="space-y-2">
+                      {deepSearchResult.related_documents.map((doc, idx) => (
+                        <div key={idx} className="bg-white p-3 rounded border border-iris-200">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-slate-900">{doc.title}</p>
+                              <p className="text-xs text-slate-600 mt-1">{doc.excerpt}</p>
+                              <p className="text-xs text-iris-600 mt-1">{doc.reference}</p>
+                            </div>
+                            <span className="text-xs font-semibold text-iris-700 bg-iris-100 px-2 py-1 rounded">
+                              {(doc.relevance_score * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Insights */}
+                {deepSearchResult.additional_insights.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Additional Insights:</h4>
+                    <ul className="space-y-1">
+                      {deepSearchResult.additional_insights.map((insight, idx) => (
+                        <li key={idx} className="text-sm text-slate-700 flex items-start gap-2">
+                          <span className="text-iris-600 mt-0.5">•</span>
+                          <span>{insight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Cross References */}
+                {deepSearchResult.cross_references.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Cross References:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {deepSearchResult.cross_references.map((ref, idx) => (
+                        <span key={idx} className="text-xs bg-white text-slate-700 px-2 py-1 rounded border border-iris-200">
+                          {ref}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowDeepSearch(false)}
+                  className="mt-3 text-xs text-iris-600 hover:text-iris-700 underline"
+                >
+                  Hide Deep Search Results
+                </button>
+              </div>
+            )}
 
             {/* RAG Metadata Section */}
             {displayContent && ragResponse && (
