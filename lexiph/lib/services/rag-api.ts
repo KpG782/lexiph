@@ -2,7 +2,7 @@
 
 // RAG API Service for Philippine Legislation Research
 
-const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://66.181.46.44:7767'
+const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:8000'
 
 export interface RAGQuery {
   query: string
@@ -13,8 +13,13 @@ export interface RAGResponse {
   status: 'completed' | 'no_results' | 'error'
   query: string
   summary: string
-  search_queries_used: string[]
-  documents_found: number
+  search_queries_used?: string[]
+  documents_found?: number
+  processing_stages?: {
+    query_generator: string
+    search_executor: string
+    summarizer: string
+  }
 }
 
 export interface RAGError {
@@ -38,13 +43,13 @@ export interface WebSocketEvent {
   }
 }
 
-// Simple RAG API call
+// RAG API call with proper timeout (300 seconds as per API docs)
 export async function queryRAG(params: RAGQuery): Promise<RAGResponse> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000)
+  const timeoutId = setTimeout(() => controller.abort(), 300000) // 300 seconds = 5 minutes
 
   try {
-    const response = await fetch(`${RAG_API_BASE_URL}/api/research/simple-rag`, {
+    const response = await fetch(`${RAG_API_BASE_URL}/api/research/rag-summary`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,7 +72,7 @@ export async function queryRAG(params: RAGQuery): Promise<RAGResponse> {
     
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        throw new Error('Request timed out. The query may be too complex.')
+        throw new Error('Request timed out after 5 minutes. The query may be too complex or the server is busy.')
       }
       throw error
     }
@@ -100,7 +105,7 @@ export class RAGWebSocket {
   private wsUrl: string
 
   constructor() {
-    this.wsUrl = process.env.NEXT_PUBLIC_RAG_WS_URL || 'ws://66.181.46.44:7767'
+    this.wsUrl = process.env.NEXT_PUBLIC_RAG_WS_URL || 'ws://localhost:8000'
   }
 
   connect(onMessage: (event: WebSocketEvent) => void, onError?: (error: any) => void) {
@@ -108,7 +113,7 @@ export class RAGWebSocket {
     this.onError = onError
 
     try {
-      this.ws = new WebSocket(`${this.wsUrl}/api/research/ws/simple-rag`)
+      this.ws = new WebSocket(`${this.wsUrl}/api/research/ws/rag-summary`)
       
       this.ws.onopen = () => {
         console.log('RAG WebSocket connected')

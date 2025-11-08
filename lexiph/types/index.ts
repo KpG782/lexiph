@@ -20,6 +20,14 @@ export interface Message {
     }
     searchQueries?: string[]
     documentCount?: number
+    deepSearch?: boolean
+    documentsSearched?: number
+    relatedDocuments?: Array<{
+      title: string
+      relevance_score: number
+      excerpt: string
+      reference: string
+    }>
   }
 }
 

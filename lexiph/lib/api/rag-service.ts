@@ -1,9 +1,15 @@
 /**
  * RAG API Service for Philippine Legislative Research
- * Base URL: http://66.181.46.44:7767
+ * Base URL: http://localhost:8000
+ * 
+ * API Documentation:
+ * - Main Endpoint: POST /api/research/rag-summary
+ * - WebSocket: ws://localhost:8000/api/research/ws/rag-summary
+ * - Timeout: 300 seconds (5 minutes) for full pipeline
+ * - Pipeline: Query Generation → Database Search → AI Summarization
  */
 
-const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://66.181.46.44:7767'
+const RAG_API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || 'http://localhost:8000'
 
 export interface RAGRequest {
   query: string
@@ -14,8 +20,13 @@ export interface RAGResponse {
   status: 'completed' | 'no_results' | 'error'
   query: string
   summary: string
-  search_queries_used: string[]
-  documents_found: number
+  search_queries_used?: string[]
+  documents_found?: number
+  processing_stages?: {
+    query_generator: string
+    search_executor: string
+    summarizer: string
+  }
 }
 
 export interface RAGError {
@@ -23,21 +34,29 @@ export interface RAGError {
 }
 
 /**
- * Simple RAG API Call
- * Executes full RAG pipeline in one request
+ * RAG API Call - Full 3-Stage Pipeline
+ * Executes: Query Generation → Database Search → AI Summarization
+ * Expected time: 50-90 seconds
+ * Timeout: 300 seconds (5 minutes)
  */
-export async function simpleRAG(query: string, userId?: string): Promise<RAGResponse> {
+export async function ragSummary(query: string, userId?: string): Promise<RAGResponse> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 300000) // 300 seconds
+
   try {
-    const response = await fetch(`${RAG_API_BASE_URL}/api/research/simple-rag`, {
+    const response = await fetch(`${RAG_API_BASE_URL}/api/research/rag-summary`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query,
-        user_id: userId || 'LexInSight-user',
+        user_id: userId || 'lexinsights-user',
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const error: RAGError = await response.json()
@@ -47,6 +66,14 @@ export async function simpleRAG(query: string, userId?: string): Promise<RAGResp
     const data: RAGResponse = await response.json()
     return data
   } catch (error) {
+    clearTimeout(timeoutId)
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out after 5 minutes. Please try again.')
+      }
+    }
+    
     console.error('RAG API Error:', error)
     throw error
   }
@@ -84,14 +111,15 @@ export interface RAGStreamEvent {
 
 export function createRAGWebSocket(
   query: string,
+  userId: string,
   onEvent: (event: RAGStreamEvent) => void,
   onError?: (error: Error) => void
 ): WebSocket {
   const wsUrl = RAG_API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://')
-  const ws = new WebSocket(`${wsUrl}/api/research/ws/simple-rag`)
+  const ws = new WebSocket(`${wsUrl}/api/research/ws/rag-summary`)
 
   ws.onopen = () => {
-    ws.send(JSON.stringify({ query }))
+    ws.send(JSON.stringify({ query, user_id: userId }))
   }
 
   ws.onmessage = (event) => {
