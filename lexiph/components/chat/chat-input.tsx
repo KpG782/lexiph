@@ -43,11 +43,20 @@ export function ChatInput() {
     setIsSending(true)
     
     try {
-      // Route to appropriate API based on mode
+      // Both modes now use RAG API for text queries
       if (mode === 'general') {
-        // General chat API call (sample)
-        console.log('Calling general chat API with message:', message)
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // General mode - use RAG API for Philippine law questions
+        if (message.trim()) {
+          console.log('Calling RAG API with message:', message)
+          
+          // Dispatch event to notify container
+          const event = new CustomEvent('query-submitted', {
+            detail: { query: message.trim() }
+          })
+          window.dispatchEvent(event)
+          
+          await submitQuery(message.trim(), user?.id)
+        }
       } else {
         // Compliance mode - use RAG API or file processing
         if (uploadedFile) {
@@ -67,9 +76,12 @@ export function ChatInput() {
         }
       }
       
-      // Clear textarea and file after send
+      // Clear textarea after send
       setMessage('')
-      setUploadedFile(null)
+      // Only clear file in compliance mode
+      if (mode === 'compliance') {
+        setUploadedFile(null)
+      }
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
@@ -250,11 +262,11 @@ export function ChatInput() {
             Press Enter to send, Shift+Enter for new line
           </span>
           
-          {/* Deep Search Button (Compliance Mode Only) */}
-          {mode === 'compliance' && (
+          {/* Deep Search Button (General Mode Only) */}
+          {mode === 'general' && (
             <button
               onClick={handleDeepSearch}
-              disabled={(!message.trim() && !uploadedFile) || isDeepSearching || isSending || loading}
+              disabled={!message.trim() || isDeepSearching || isSending || loading}
               className="rounded-lg bg-gradient-to-r from-iris-500 to-purple-500 p-2 text-white transition-all hover:from-iris-600 hover:to-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[40px] min-w-[40px] flex items-center justify-center"
               aria-label={isDeepSearching ? 'Performing deep search...' : 'Perform deep search'}
               type="button"

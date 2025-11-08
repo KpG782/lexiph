@@ -288,7 +288,7 @@ const sampleComplianceReport = `# Compliance Analysis Report
 *This is a sample compliance report generated for demonstration purposes.*
 `
 
-export function ChatContainer({ messages }: ChatContainerProps) {
+export function ChatContainer({ messages: initialMessages }: ChatContainerProps) {
   const { mode } = useChatModeStore()
   const { user } = useAuthStore()
   const { 
@@ -305,8 +305,10 @@ export function ChatContainer({ messages }: ChatContainerProps) {
   const [canvasFileName, setCanvasFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [deepSearchResult, setDeepSearchResult] = useState<any>(null)
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [currentQuery, setCurrentQuery] = useState<string>('')
 
-  // Show canvas when we have a RAG response
+  // Show canvas when we have a RAG response in compliance mode
   useEffect(() => {
     if (mode === 'compliance' && currentResponse) {
       setShowCanvas(true)
@@ -319,6 +321,45 @@ export function ChatContainer({ messages }: ChatContainerProps) {
     }
     // Don't auto-show canvas in compliance mode - wait for file upload
   }, [mode, currentResponse])
+
+  // Add RAG responses to messages in general mode
+  useEffect(() => {
+    if (currentResponse && mode === 'general') {
+      // Add user message if we have a query
+      if (currentQuery) {
+        const userMessage: Message = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content: currentQuery,
+          created_at: new Date().toISOString(),
+        }
+        
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: currentResponse.summary,
+          created_at: new Date().toISOString(),
+        }
+        
+        setMessages(prev => [...prev, userMessage, assistantMessage])
+        setCurrentQuery('')
+      }
+    }
+  }, [currentResponse, mode, currentQuery])
+
+  // Listen for query submissions
+  useEffect(() => {
+    const handleQuerySubmit = (event: CustomEvent) => {
+      const { query } = event.detail
+      setCurrentQuery(query)
+    }
+
+    window.addEventListener('query-submitted', handleQuerySubmit as EventListener)
+    
+    return () => {
+      window.removeEventListener('query-submitted', handleQuerySubmit as EventListener)
+    }
+  }, [])
 
   // Listen for file upload events
   useEffect(() => {
@@ -358,19 +399,43 @@ export function ChatContainer({ messages }: ChatContainerProps) {
       
       console.log('Deep search completed:', query, result)
       
-      // Store deep search result to pass to canvas
+      // Store deep search result
       setDeepSearchResult(result)
       
-      // If there's a file, also show the canvas
-      if (file) {
-        setShowCanvas(true)
-        setCanvasFileName(file.name)
-        
-        // Generate report if not already shown
-        if (!canvasContent) {
-          const mockReport = generateMockComplianceReport(file.name, query)
-          setCanvasContent(mockReport)
+      if (mode === 'compliance') {
+        // Compliance mode: show in canvas
+        if (file) {
+          setShowCanvas(true)
+          setCanvasFileName(file.name)
+          
+          // Generate report if not already shown
+          if (!canvasContent) {
+            const mockReport = generateMockComplianceReport(file.name, query)
+            setCanvasContent(mockReport)
+          }
         }
+      } else {
+        // General mode: add to messages
+        const userMessage: Message = {
+          id: `user-deep-${Date.now()}`,
+          role: 'user',
+          content: query,
+          created_at: new Date().toISOString(),
+        }
+        
+        const assistantMessage: Message = {
+          id: `assistant-deep-${Date.now()}`,
+          role: 'assistant',
+          content: result.enhanced_summary,
+          created_at: new Date().toISOString(),
+          metadata: {
+            deepSearch: true,
+            documentsSearched: result.documents_searched,
+            relatedDocuments: result.related_documents,
+          }
+        }
+        
+        setMessages(prev => [...prev, userMessage, assistantMessage])
       }
     }
 

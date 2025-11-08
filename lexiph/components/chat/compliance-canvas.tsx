@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown, Sparkles } from 'lucide-react'
+import { FileText, Download, Edit3, Eye, History, Save, Search, FileCheck, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useComplianceStore } from '@/lib/store/compliance-store'
 import { VersionHistorySidebar } from './version-history-sidebar'
@@ -9,8 +9,7 @@ import { AIDisclaimer, AIDisclaimerBadge } from './ai-disclaimer'
 import { cn } from '@/lib/utils'
 import { type RAGResponse } from '@/lib/services/rag-api'
 import { exportToDocx } from '@/lib/utils/docx-export'
-import { performDeepSearch, type DeepSearchResponse } from '@/lib/services/deep-search-api'
-import { LoadingIndicator } from './loading-indicator'
+import { type DeepSearchResponse } from '@/lib/services/deep-search-api'
 
 interface ComplianceCanvasProps {
   content: string
@@ -34,7 +33,6 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
   const [showHistory, setShowHistory] = useState(false)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [isDeepSearching, setIsDeepSearching] = useState(false)
   const [deepSearchResult, setDeepSearchResult] = useState<DeepSearchResponse | null>(externalDeepSearchResult || null)
   const [showDeepSearch, setShowDeepSearch] = useState(false)
   const currentVersion = getCurrentVersion()
@@ -110,39 +108,6 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
       liveRegion.textContent = announcement
       document.body.appendChild(liveRegion)
       setTimeout(() => document.body.removeChild(liveRegion), 1000)
-    }
-  }
-
-  const handleDeepSearch = async () => {
-    setIsDeepSearching(true)
-    setShowDeepSearch(true)
-    
-    try {
-      const result = await performDeepSearch({
-        query: 'Perform comprehensive analysis with cross-references',
-        context: currentVersion?.content || content,
-        document_name: fileName,
-        user_id: 'compliance-user',
-        max_results: 50
-      })
-      
-      setDeepSearchResult(result)
-      
-      // Announce completion
-      const announcement = 'Deep search completed. Enhanced analysis available.'
-      const liveRegion = document.createElement('div')
-      liveRegion.setAttribute('role', 'status')
-      liveRegion.setAttribute('aria-live', 'polite')
-      liveRegion.className = 'sr-only'
-      liveRegion.textContent = announcement
-      document.body.appendChild(liveRegion)
-      setTimeout(() => document.body.removeChild(liveRegion), 1000)
-    } catch (error) {
-      console.error('Deep search failed:', error)
-      alert('Deep search failed. Please try again.')
-      setShowDeepSearch(false)
-    } finally {
-      setIsDeepSearching(false)
     }
   }
 
@@ -408,30 +373,6 @@ export function ComplianceCanvas({ content, fileName, ragResponse, searchQueries
                 </>
               )}
             </Button>
-
-            {/* Deep Search Button */}
-            {!isEditMode && (
-              <Button
-                onClick={handleDeepSearch}
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 bg-gradient-to-r from-iris-50 to-purple-50 border-iris-300 text-iris-700 hover:from-iris-100 hover:to-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2"
-                aria-label="Perform deep search analysis"
-                disabled={isDeepSearching}
-              >
-                {isDeepSearching ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-iris-600 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">Searching...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    <span className="text-sm">Deep Search</span>
-                  </>
-                )}
-              </Button>
-            )}
 
             {/* Save Button (Edit Mode Only) */}
             {isEditMode && (
