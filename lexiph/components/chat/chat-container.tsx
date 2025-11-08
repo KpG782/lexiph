@@ -12,10 +12,17 @@ import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useChatStore } from '@/lib/store/chat-store'
+import { useFileUploadStore } from '@/lib/store/file-upload-store'
+import { useSidebarStore } from '@/lib/store/sidebar-store'
 import type { Message } from '@/types'
 import { AlertCircle, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { DragDropOverlay } from './drag-drop-overlay'
+import { UploadedFilesList } from './uploaded-files-list'
+import { showToast } from '@/components/ui/toast'
+import { EmptyState } from './empty-state'
+import { CenteredInput } from './centered-input'
 
 interface ChatContainerProps {
   messages: Message[]
@@ -243,6 +250,7 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
     clearError 
   } = useRAGStore()
   const { activeChat, messages: chatMessages, fetchMessages, loadingMessages } = useChatStore()
+  const { addFiles, uploadedFiles, canAddMore } = useFileUploadStore()
   
   const [showCanvas, setShowCanvas] = useState(false)
   const [canvasContent, setCanvasContent] = useState('')
@@ -250,9 +258,34 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
   const [isProcessing, setIsProcessing] = useState(false)
   const [deepSearchResult, setDeepSearchResult] = useState<any>(null)
   const [currentQuery, setCurrentQuery] = useState<string>('')
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
+  // Handle file drop - only add to list, don't process yet
+  const handleFileDrop = (files: File[]) => {
+    if (!canAddMore()) {
+      showToast('Maximum 3 documents allowed', 'error')
+      return
+    }
+
+    // Validate file sizes (5MB limit)
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
+    const oversizedFiles = files.filter(file => file.size > maxSize)
+    
+    if (oversizedFiles.length > 0) {
+      showToast(`Some files exceed 5MB limit and were not added`, 'error')
+    }
+
+    const validFiles = files.filter(file => file.size <= maxSize)
+    
+    if (validFiles.length > 0) {
+      addFiles(validFiles)
+      showToast(`${validFiles.length} document(s) added. Click send to analyze.`, 'success')
+    }
+  }
 
   // Get messages for active chat
   const messages = activeChat ? (chatMessages[activeChat.id] || []) : initialMessages
+  const hasMessages = messages.length > 0
 
   // Fetch messages when active chat changes
   useEffect(() => {
@@ -260,6 +293,38 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
       fetchMessages(activeChat.id)
     }
   }, [activeChat, chatMessages, fetchMessages])
+
+  // Handle prompt selection from empty state
+  const handlePromptSelect = (prompt: string) => {
+    // Dispatch event to notify container
+    const event = new CustomEvent('query-submitted', {
+      detail: { query: prompt }
+    })
+    window.dispatchEvent(event)
+    
+    submitQuery(prompt, user?.id)
+  }
+
+  // Handle centered input send
+  const handleCenteredSend = (message: string) => {
+    // Start transition animation
+    setIsTransitioning(true)
+    
+    // Close sidebar on send (always, not just mobile)
+    const sidebarStore = useSidebarStore.getState()
+    sidebarStore.close()
+    
+    // Dispatch event to notify container
+    const event = new CustomEvent('query-submitted', {
+      detail: { query: message }
+    })
+    window.dispatchEvent(event)
+    
+    submitQuery(message, user?.id)
+    
+    // Reset transition after animation
+    setTimeout(() => setIsTransitioning(false), 300)
+  }
 
   // Show canvas when we have a RAG response in compliance mode
   useEffect(() => {
@@ -407,6 +472,9 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
 
   return (
     <div className="flex h-screen flex-col bg-slate-50">
+      {/* Drag and Drop Overlay */}
+      <DragDropOverlay onFileDrop={handleFileDrop} maxFiles={3} />
+      
       <ChatHeader />
       
       <div className="flex flex-1 overflow-hidden">
@@ -471,25 +539,48 @@ export function ChatContainer({ messages: initialMessages }: ChatContainerProps)
             ) : null}
             </div>
             
-            {/* Messages with scrollbar on far right */}
+            {/* Messages with scrollbar on far right OR Empty State */}
             {!loadingMessages && (
               <div className="flex-1 overflow-y-auto">
-                <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-                  <ChatMessages messages={messages} />
-                  
-                  {/* Enhanced Typing Indicator */}
-                  <AnimatePresence>
-                    {(loading || isProcessing) && (
-                      <div className="mt-4 flex justify-start">
-                        <TypingIndicator />
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                {hasMessages ? (
+                  <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+                    <ChatMessages messages={messages} />
+                    
+                    {/* Enhanced Typing Indicator */}
+                    <AnimatePresence>
+                      {(loading || isProcessing) && (
+                        <div className="mt-4 flex justify-start">
+                          <TypingIndicator />
+                        </div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  /* Empty State with Centered Input */
+                  <motion.div 
+                    className="flex flex-col h-full justify-center py-8"
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: isTransitioning ? 0 : 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="space-y-8">
+                      {/* 1. Greeting and assistant text */}
+                      <EmptyState onPromptSelect={handlePromptSelect} />
+                      
+                      {/* 2. Centered Input */}
+                      <CenteredInput 
+                        onSend={handleCenteredSend}
+                        disabled={loading}
+                        isTransitioning={isTransitioning}
+                      />
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </div>
-          <ChatInput />
+          {/* Only show ChatInput when there are messages */}
+          {hasMessages && <ChatInput />}
         </div>
 
         {/* Canvas Toggle Button - Icon Only */}
