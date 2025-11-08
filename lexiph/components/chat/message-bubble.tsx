@@ -25,10 +25,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           : 'mr-auto border border-slate-200 bg-white text-slate-900'
       }`}
     >
-      <p className="whitespace-pre-wrap text-responsive-base leading-relaxed break-word">{message.content}</p>
+      <p className="font-body whitespace-pre-wrap text-base leading-relaxed break-word font-normal">{message.content}</p>
       <p
-        className={`mt-1 text-xs ${
-          isUser ? 'text-iris-100' : 'text-slate-400'
+        className={`mt-1 font-body text-xs font-medium ${
+          isUser ? 'text-iris-100' : 'text-neutral-600'
         }`}
       >
         {formatTime(message.created_at)}

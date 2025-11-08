@@ -149,11 +149,11 @@ export function ComplianceCanvas({ content, fileName }: ComplianceCanvasProps) {
         <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-slate-600" aria-hidden="true" />
-            <h2 className="text-base font-semibold text-slate-900 truncate">
+            <h2 className="font-display text-base font-semibold text-neutral-900 truncate">
               Compliance Report
             </h2>
             {currentVersion && (
-              <span className="text-xs text-slate-500 truncate max-w-[120px]">
+              <span className="font-body text-xs text-neutral-600 truncate max-w-[120px] font-medium">
                 ({currentVersion.label})
               </span>
             )}

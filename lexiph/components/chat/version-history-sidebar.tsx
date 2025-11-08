@@ -29,8 +29,8 @@ export function VersionHistorySidebar() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-slate-200 px-4 py-3">
-        <h3 className="text-sm font-semibold text-slate-900 truncate">Version History</h3>
-        <p className="text-xs text-slate-500 mt-1 truncate">{versions.length} versions</p>
+        <h3 className="font-display text-sm font-semibold text-neutral-900 truncate">Version History</h3>
+        <p className="font-body text-xs text-neutral-600 mt-1 truncate font-medium">{versions.length} versions</p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -65,8 +65,8 @@ export function VersionHistorySidebar() {
                       <Clock className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" aria-hidden="true" />
                       <span
                         className={cn(
-                          'text-sm font-medium truncate',
-                          isActive ? 'text-iris-700' : 'text-slate-700'
+                          'font-body text-sm font-semibold truncate',
+                          isActive ? 'text-iris-700' : 'text-neutral-800'
                         )}
                       >
                         {version.label}
@@ -77,7 +77,7 @@ export function VersionHistorySidebar() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 font-body text-xs text-neutral-600 font-medium">
                       {formatTimestamp(version.timestamp)}
                     </p>
                   </div>
