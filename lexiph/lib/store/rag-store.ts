@@ -155,8 +155,19 @@ export const useRAGStore = create<RAGStore>()(
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
           
+          // Check if it's a 502 Bad Gateway error
+          if (errorMessage.includes('502') || errorMessage.includes('Bad Gateway')) {
+            console.error('RAG API is currently unavailable (502 Bad Gateway)')
+            set({ 
+              error: 'RAG service is temporarily unavailable. Please try again later.', 
+              loading: false,
+              currentResponse: null
+            })
+            return
+          }
+          
           // Retry logic for network errors
-          if (retryCount < maxRetries && errorMessage.includes('fetch')) {
+          if (retryCount < maxRetries && (errorMessage.includes('fetch') || errorMessage.includes('network'))) {
             console.log(`Retrying query (attempt ${retryCount + 1}/${maxRetries})...`)
             setTimeout(() => {
               get().submitQuery(query, userId, retryCount + 1)

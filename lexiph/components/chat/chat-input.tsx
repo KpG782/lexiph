@@ -6,8 +6,10 @@ import { useChatModeStore } from '@/lib/store/chat-mode-store'
 import { useRAGStore } from '@/lib/store/rag-store'
 import { useAuthStore } from '@/lib/store/auth-store'
 import { useSidebarStore } from '@/lib/store/sidebar-store'
+import { useFileUploadStore } from '@/lib/store/file-upload-store'
 import { ChatModeToggle } from './chat-mode-toggle'
 import { performDeepSearch } from '@/lib/services/deep-search-api'
+import { UploadedFilesList } from './uploaded-files-list'
 
 // Debounce utility
 function debounce<T extends (...args: any[]) => any>(
@@ -29,6 +31,7 @@ export function ChatInput() {
   const { submitQuery, loading } = useRAGStore()
   const { user } = useAuthStore()
   const { isMobile, close } = useSidebarStore()
+  const { uploadedFiles, clearFiles } = useFileUploadStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Debounced submit for better UX
@@ -40,7 +43,7 @@ export function ChatInput() {
   )
 
   const handleSend = async () => {
-    if ((!message.trim() && !uploadedFile) || isSending || loading) return
+    if ((!message.trim() && !uploadedFile && uploadedFiles.length === 0) || isSending || loading) return
 
     // Close sidebar on mobile when sending message
     if (isMobile) {
@@ -65,11 +68,26 @@ export function ChatInput() {
           await submitQuery(message.trim(), user?.id)
         }
       } else {
-        // Compliance mode - use RAG API or file processing
-        if (uploadedFile) {
+        // Compliance mode - process uploaded files from drag-drop store
+        if (uploadedFiles.length > 0) {
+          console.log('Processing uploaded files:', uploadedFiles.length)
+          
+          // Process each uploaded file
+          uploadedFiles.forEach(uploadedFile => {
+            const event = new CustomEvent('file-uploaded', { 
+              detail: { 
+                file: uploadedFile.file,
+                query: message.trim() || `Analyze ${uploadedFile.file.name} for compliance`
+              } 
+            })
+            window.dispatchEvent(event)
+          })
+          
+          // Clear uploaded files after processing
+          clearFiles()
+        } else if (uploadedFile) {
+          // Legacy single file upload
           console.log('Processing compliance file:', uploadedFile.name)
-          // Trigger canvas display with mock compliance report
-          // This will be handled by ChatContainer listening for file uploads
           const event = new CustomEvent('file-uploaded', { 
             detail: { 
               file: uploadedFile,
@@ -193,8 +211,17 @@ export function ChatInput() {
     : 'Upload a document and ask about compliance...'
 
   return (
-    <div className="border-t bg-white p-3 sm:p-4" role="region" aria-label="Message input">
-      <div className="mx-auto max-w-5xl space-y-3">
+    <div className="border-t bg-white" role="region" aria-label="Message input">
+      {/* Uploaded Files List - Shows files from drag-drop */}
+      {uploadedFiles.length > 0 && (
+        <div className="border-b border-slate-200 bg-slate-50">
+          <div className="mx-auto max-w-5xl px-3 sm:px-4 py-3">
+            <UploadedFilesList />
+          </div>
+        </div>
+      )}
+      
+      <div className="mx-auto max-w-5xl space-y-3 p-3 sm:p-4">
         {/* Mode Toggle */}
         <div className="flex justify-center">
           <ChatModeToggle />

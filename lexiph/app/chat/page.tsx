@@ -15,21 +15,14 @@ import { Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message } from '@/types'
 
-// Mock messages for MVP demonstration
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    role: 'assistant',
-    content: 'Hello! I\'m LexInsight, your Philippine legal compliance assistant. How can I help you today?',
-    created_at: new Date().toISOString(),
-  },
-]
+// Empty messages array - show empty state by default
+const mockMessages: Message[] = []
 
 export default function ChatPage() {
   const router = useRouter()
   const { user, loading } = useAuthStore()
   const { isOpen, isMobile, open, setIsMobile } = useSidebarStore()
-  const { chats, selectChat } = useChatStore()
+  const { chats, selectChat, fetchChats } = useChatStore()
   const [checkingVerification, setCheckingVerification] = useState(true)
 
   // Responsive breakpoint detection
@@ -86,15 +79,15 @@ export default function ChatPage() {
     checkAuth()
   }, [user, loading, router])
 
-  // Redirect to first chat if available
+  // Don't auto-redirect to first chat - show empty state instead
+  // Users can click on a chat from the sidebar to open it
+
+  // Fetch chats when user is authenticated
   useEffect(() => {
-    if (!checkingVerification && user && chats.length > 0) {
-      // Navigate to the first chat (most recent) without selecting yet
-      // The dynamic route will handle selection
-      const firstChat = chats[0]
-      router.push(`/chat/${firstChat.id}`)
+    if (!checkingVerification && user) {
+      fetchChats()
     }
-  }, [checkingVerification, user, chats, router])
+  }, [checkingVerification, user, fetchChats])
 
   // Show loading state while checking session or verification
   if (loading || checkingVerification) {
